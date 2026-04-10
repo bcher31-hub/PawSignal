@@ -17,22 +17,8 @@
       padding: 80px 20px;
     }
 
-    h1 {
-      font-size: 48px;
-      margin-bottom: 10px;
-    }
-
-    h2 {
-      color: #2F80ED;
-      font-size: 28px;
-    }
-
-    p {
-      max-width: 600px;
-      margin: 20px auto;
-      color: #667085;
-      font-size: 18px;
-    }
+    h1 { font-size: 48px; }
+    h2 { color: #2F80ED; }
 
     .btn {
       background: #EB5757;
@@ -40,108 +26,60 @@
       padding: 14px 24px;
       border: none;
       border-radius: 10px;
-      font-size: 16px;
       cursor: pointer;
+      margin-top: 10px;
     }
 
-    .section {
-      padding: 60px 20px;
+    input, textarea {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 250px;
+      margin-top: 10px;
     }
 
-    .dark {
-      background: #101828;
-      color: white;
+    textarea {
+      height: 80px;
     }
-
   </style>
 </head>
 
 <body>
 
-  <!-- HERO -->
   <div class="hero">
     <h1>🐾 PawSignal</h1>
     <h2>Bring them home faster.</h2>
 
     <p>
-      A real-time community network that helps lost pets get found faster using live alerts, maps, and nearby helpers.
+      Helping lost pets get found faster in Tampa and beyond 🐾
     </p>
 
-    <button class="btn" onclick="alert('Coming soon: Report a lost pet 🐾')">
-  Report Lost Pet
-</button>
-
-    <div style="margin-top:40px;">
-  <h3>Report a Lost Pet 🐾</h3>
-
-  <input id="pet_name" placeholder="Pet Name" /><br/>
-  <input id="pet_type" placeholder="Dog or Cat" /><br/>
-  <input id="location" placeholder="Last Seen Location" /><br/>
-  <input id="contact" placeholder="Your Contact Info" /><br/>
-
-  <textarea id="description" placeholder="Description"
-    style="padding:12px; width:250px; margin-top:10px;"></textarea><br/>
-
-  <button class="btn" onclick="submitPet()">Submit Report</button>
-
-  <p id="pet_status"></p>
-</div>
-  </div>
-
-  <!-- WAITLIST -->
+    <!-- WAITLIST -->
     <input id="email" type="email" placeholder="Enter your email" />
     <br/>
     <button class="btn" onclick="submitEmail()">Join Waitlist</button>
-
     <p id="status"></p>
 
-  async function submitPet() {
-  const name = document.getElementById("pet_name").value;
-  const type = document.getElementById("pet_type").value;
-  const location = document.getElementById("location").value;
-  const contact = document.getElementById("contact").value;
-  const description = document.getElementById("description").value;
+    <!-- LOST PET FORM -->
+    <div style="margin-top:40px;">
+      <h3>Report a Lost Pet 🐾</h3>
 
-  const { data, error } = await client
-    .from("lost_pets")
-    .insert([{
-      name,
-      type,
-      last_seen_location: location,
-      contact_info: contact,
-      description
-    }]);
+      <input id="pet_name" placeholder="Pet Name" /><br/>
+      <input id="pet_type" placeholder="Dog or Cat" /><br/>
+      <input id="location" placeholder="Last Seen Location" /><br/>
+      <input id="contact" placeholder="Your Contact Info" /><br/>
 
-  if (error) {
-    console.log(error);
-    document.getElementById("pet_status").innerText = "Error submitting ❌";
-  } else {
-    document.getElementById("pet_status").innerText = "Pet reported successfully 🐾";
-  }
-}
-  
+      <textarea id="description" placeholder="Description"></textarea><br/>
+
+      <button class="btn" onclick="submitPet()">Submit Report</button>
+
+      <p id="pet_status"></p>
+    </div>
   </div>
 
-  <!-- PROBLEM -->
-  <div class="section dark">
-    <h2 style="color:white;">Every minute matters.</h2>
-    <p style="color:#ccc;">
-      Most pets are found within 24 hours — but only if people nearby know quickly.
-    </p>
-  </div>
-
-  <!-- SOLUTION -->
-  <div class="section">
-    <h2>Meet PawSignal</h2>
-    <p>
-      A live network that turns every phone into a search tool for lost pets.
-    </p>
-  </div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
   <script>
-    // 🔑 PASTE YOUR KEYS HERE
     const SUPABASE_URL = "https://ofbuiybymxkviplrbxls.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mYnVpeWJ5bXhrdmlwbHJieGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4Mzg4MjIsImV4cCI6MjA5MTQxNDgyMn0.3r-GEMyfXde5oOHxahYwnfAR6gUfGX5pvwBpPCASO-s";
 
@@ -150,31 +88,29 @@
     async function submitEmail() {
       const email = document.getElementById("email").value;
 
-      if (!email) {
-        document.getElementById("status").innerText = "Enter an email first ⚠️";
-        return;
-      }
-
-      const { data, error } = await client
+      const { error } = await client
         .from("waitlist")
         .insert([{ email }]);
 
-      if (error) {
-  console.log(error);
-  document.getElementById("status").innerText = "Error saving ❌";
-} else {
-  document.getElementById("status").innerHTML = `
-    You're on the list 🐾<br/>
-    <small>Help us grow — share PawSignal:</small><br/><br/>
-    <a href="https://twitter.com/intent/tweet?text=I just joined PawSignal 🐾 — helping lost pets get found faster! https://paw-signal.vercel.app" target="_blank">
-      Share on Twitter
-    </a>
-  `;
+      document.getElementById("status").innerText =
+        error ? "Error ❌" : "You're on the list 🐾";
+    }
 
-  document.getElementById("email").value = "";
-}
+    async function submitPet() {
+      const { error } = await client
+        .from("lost_pets")
+        .insert([{
+          name: document.getElementById("pet_name").value,
+          type: document.getElementById("pet_type").value,
+          last_seen_location: document.getElementById("location").value,
+          contact_info: document.getElementById("contact").value,
+          description: document.getElementById("description").value
+        }]);
+
+      document.getElementById("pet_status").innerText =
+        error ? "Error submitting ❌" : "Pet reported 🐾";
     }
   </script>
-  
+
 </body>
 </html>
