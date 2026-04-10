@@ -118,12 +118,19 @@
         .insert([{ email }]);
 
       if (error) {
-        console.log(error);
-        document.getElementById("status").innerText = "Error saving ❌";
-      } else {
-        document.getElementById("status").innerText = "You're on the list 🐾";
-        document.getElementById("email").value = "";
-      }
+  console.log(error);
+  document.getElementById("status").innerText = "Error saving ❌";
+} else {
+  document.getElementById("status").innerHTML = `
+    You're on the list 🐾<br/>
+    <small>Help us grow — share PawSignal:</small><br/><br/>
+    <a href="https://twitter.com/intent/tweet?text=I just joined PawSignal 🐾 — helping lost pets get found faster! https://paw-signal.vercel.app" target="_blank">
+      Share on Twitter
+    </a>
+  `;
+
+  document.getElementById("email").value = "";
+}
     }
   </script>
   
