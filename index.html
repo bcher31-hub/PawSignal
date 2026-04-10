@@ -70,6 +70,22 @@
     <button class="btn" onclick="alert('Coming soon: Report a lost pet 🐾')">
   Report Lost Pet
 </button>
+
+    <div style="margin-top:40px;">
+  <h3>Report a Lost Pet 🐾</h3>
+
+  <input id="pet_name" placeholder="Pet Name" /><br/>
+  <input id="pet_type" placeholder="Dog or Cat" /><br/>
+  <input id="location" placeholder="Last Seen Location" /><br/>
+  <input id="contact" placeholder="Your Contact Info" /><br/>
+
+  <textarea id="description" placeholder="Description"
+    style="padding:12px; width:250px; margin-top:10px;"></textarea><br/>
+
+  <button class="btn" onclick="submitPet()">Submit Report</button>
+
+  <p id="pet_status"></p>
+</div>
   </div>
 
   <!-- WAITLIST -->
