@@ -94,6 +94,32 @@
     <button class="btn" onclick="submitEmail()">Join Waitlist</button>
 
     <p id="status"></p>
+
+  async function submitPet() {
+  const name = document.getElementById("pet_name").value;
+  const type = document.getElementById("pet_type").value;
+  const location = document.getElementById("location").value;
+  const contact = document.getElementById("contact").value;
+  const description = document.getElementById("description").value;
+
+  const { data, error } = await client
+    .from("lost_pets")
+    .insert([{
+      name,
+      type,
+      last_seen_location: location,
+      contact_info: contact,
+      description
+    }]);
+
+  if (error) {
+    console.log(error);
+    document.getElementById("pet_status").innerText = "Error submitting ❌";
+  } else {
+    document.getElementById("pet_status").innerText = "Pet reported successfully 🐾";
+  }
+}
+  
   </div>
 
   <!-- PROBLEM -->
