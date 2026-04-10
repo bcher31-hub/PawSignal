@@ -94,5 +94,36 @@
     </p>
   </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <script>
+    // 🔑 PASTE YOUR KEYS HERE
+    const SUPABASE_URL = "https://ofbuiybymxkviplrbxls.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mYnVpeWJ5bXhrdmlwbHJieGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4Mzg4MjIsImV4cCI6MjA5MTQxNDgyMn0.3r-GEMyfXde5oOHxahYwnfAR6gUfGX5pvwBpPCASO-s";
+
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function submitEmail() {
+      const email = document.getElementById("email").value;
+
+      if (!email) {
+        document.getElementById("status").innerText = "Enter an email first ⚠️";
+        return;
+      }
+
+      const { data, error } = await client
+        .from("waitlist")
+        .insert([{ email }]);
+
+      if (error) {
+        console.log(error);
+        document.getElementById("status").innerText = "Error saving ❌";
+      } else {
+        document.getElementById("status").innerText = "You're on the list 🐾";
+        document.getElementById("email").value = "";
+      }
+    }
+  </script>
+  
 </body>
 </html>
