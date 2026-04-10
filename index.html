@@ -129,6 +129,28 @@
       document.getElementById("pet_status").innerText =
         error ? "Error submitting ❌" : "Pet reported 🐾";
     }
+    async function loadPets() {
+  const { data, error } = await client
+    .from("lost_pets")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  const container = document.getElementById("pet_list");
+
+  if (error) {
+    container.innerText = "Error loading pets";
+    return;
+  }
+
+  container.innerHTML = data.map(pet => `
+    <div style="border:1px solid #ddd; padding:10px; margin:10px;">
+      <strong>${pet.name}</strong> (${pet.type})<br/>
+      📍 ${pet.last_seen_location}<br/>
+      📝 ${pet.description}<br/>
+      📞 ${pet.contact_info}
+    </div>
+  `).join("");
+}
   </script>
 
 </body>
