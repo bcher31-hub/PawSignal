@@ -115,64 +115,73 @@
 
 <script>
 
-let map;
-let userLocation = null;
-let radiusCircle = null;
-window.petMarkers = [];
+console.log("PawSignal MVP booting...");
 
+// ================= STATE =================
+const state = {
+  map: null,
+  userLocation: null,
+  pets: [],
+  markers: [],
+  radiusCircle: null
+};
+
+// ================= SUPABASE =================
 const client = supabase.createClient(
   "https://ofbuiybymxkviplrbxls.supabase.co",
   "YOUR_SUPABASE_ANON_KEY"
 );
 
-// ---------------- MAP INIT ----------------
+// ================= INIT =================
 window.addEventListener("DOMContentLoaded", () => {
 
-  map = L.map("map").setView([27.95, -82.46], 10);
+  initMap();
+  initRadiusListener();
+  loadPets(); // ALWAYS load even without location
+  initLocation(); // optional
+
+});
+
+// ================= MAP =================
+function initMap() {
+  state.map = L.map("map").setView([27.95, -82.46], 10);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "&copy; OpenStreetMap"
-  }).addTo(map);
+  }).addTo(state.map);
 
-  // FIX: ensure DOM + map ready before radius/events
-  setTimeout(() => {
-    initApp();
-  }, 300);
-});
-
-// ---------------- APP INIT ----------------
-function initApp() {
-
-  navigator.geolocation.getCurrentPosition((pos) => {
-
-    userLocation = {
-      lat: pos.coords.latitude,
-      lng: pos.coords.longitude
-    };
-
-    map.setView([userLocation.lat, userLocation.lng], 12);
-
-    L.marker([userLocation.lat, userLocation.lng])
-      .addTo(map)
-      .bindPopup("📍 You are here");
-
-    drawRadius();
-    loadPets();
-
-  });
-
-  // FIX: radius listener ONLY after DOM ready
-  document.getElementById("radius").addEventListener("input", () => {
-    drawRadius();
-    loadPets();
-  });
+  setTimeout(() => state.map.invalidateSize(), 400);
 }
 
-// ---------------- DISTANCE ----------------
+// ================= LOCATION =================
+function initLocation() {
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+
+      state.userLocation = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude
+      };
+
+      state.map.setView([state.userLocation.lat, state.userLocation.lng], 12);
+
+      L.marker([state.userLocation.lat, state.userLocation.lng])
+        .addTo(state.map)
+        .bindPopup("📍 You are here");
+
+      drawRadius();
+      renderPets();
+
+    },
+    () => console.warn("Location denied (app still works)")
+  );
+}
+
+// ================= DISTANCE =================
 function getDistance(lat1, lon1, lat2, lon2) {
   const R = 3958.8;
-  const dLat = (lat2 - lat1) * Math.PI/180;
-  const dLon = (lon2 - lon1) * Math.PI/180;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
 
   const a =
     Math.sin(dLat/2)**2 +
@@ -183,72 +192,121 @@ function getDistance(lat1, lon1, lat2, lon2) {
   return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
 }
 
-// ---------------- RADIUS ----------------
-function drawRadius() {
-  if (!map || !userLocation) return;
+// ================= RADIUS =================
+function initRadiusListener() {
+  const el = document.getElementById("radius");
 
-  const radius = parseFloat(document.getElementById("radius").value) || 10;
+  if (!el) return;
 
-  if (radiusCircle) map.removeLayer(radiusCircle);
-
-  radiusCircle = L.circle([userLocation.lat, userLocation.lng], {
-    radius: radius * 1609,
-    color: "blue",
-    fillOpacity: 0.1
-  }).addTo(map);
+  el.addEventListener("input", () => {
+    drawRadius();
+    renderPets();
+  });
 }
 
-// ---------------- PETS ----------------
+function drawRadius() {
+  if (!state.map || !state.userLocation) return;
+
+  const radius = Number(document.getElementById("radius").value || 10);
+
+  if (state.radiusCircle) {
+    state.map.removeLayer(state.radiusCircle);
+  }
+
+  state.radiusCircle = L.circle(
+    [state.userLocation.lat, state.userLocation.lng],
+    {
+      radius: radius * 1609,
+      color: "blue",
+      fillOpacity: 0.15
+    }
+  ).addTo(state.map);
+}
+
+// ================= LOAD PETS =================
 async function loadPets() {
+  try {
 
-  if (!map || !userLocation) return;
+    const { data, error } = await client
+      .from("lost_pets")
+      .select("*");
 
-  const { data } = await client
-    .from("lost_pets")
-    .select("*");
+    if (error) {
+      console.error("Supabase error:", error);
+      return;
+    }
+
+    state.pets = data || [];
+
+    renderPets();
+
+  } catch (err) {
+    console.error("Fatal load error:", err);
+  }
+}
+
+// ================= RENDER =================
+function renderPets() {
 
   const container = document.getElementById("pet_list");
+  if (!container) return;
 
-  container.innerHTML = data.map(p => `
-    <div style="border:1px solid #ddd;margin:10px;padding:10px;">
-      <b>${p.name}</b><br/>
-      ${p.type}<br/>
-      ${p.last_seen_location}<br/>
-      ${p.description}<br/>
-
-      ${p.image_url
-        ? `<img src="${p.image_url}" style="width:180px;margin-top:10px;border-radius:8px;" />`
-        : ""}
-    </div>
-  `).join("");
+  const radius = Number(document.getElementById("radius")?.value || 10);
 
   // clear markers safely
-  window.petMarkers.forEach(m => map.removeLayer(m));
-  window.petMarkers = [];
+  state.markers.forEach(m => state.map.removeLayer(m));
+  state.markers = [];
 
-  const radius = parseFloat(document.getElementById("radius").value) || 10;
+  container.innerHTML = state.pets.map(p => {
 
-  data.forEach(p => {
+    const img = p.image_url
+      ? `<img src="${p.image_url}" style="width:180px;border-radius:8px;margin-top:10px;" />`
+      : "";
+
+    return `
+      <div style="border:1px solid #ddd;margin:10px;padding:10px;">
+        <b>${p.name || "Unknown"}</b><br/>
+        ${p.type || ""}<br/>
+        ${p.last_seen_location || ""}<br/>
+        ${p.description || ""}<br/>
+        ${img}
+      </div>
+    `;
+  }).join("");
+
+  // map markers
+  state.pets.forEach(p => {
+
     if (!p.latitude || !p.longitude) return;
 
-    const d = getDistance(
-      userLocation.lat,
-      userLocation.lng,
-      p.latitude,
-      p.longitude
-    );
+    if (state.userLocation) {
 
-    if (d <= radius) {
+      const d = getDistance(
+        state.userLocation.lat,
+        state.userLocation.lng,
+        p.latitude,
+        p.longitude
+      );
+
+      if (d > radius) return;
+
       const marker = L.marker([p.latitude, p.longitude])
-        .addTo(map)
-        .bindPopup(`${p.name} - ${d.toFixed(1)} miles`);
+        .addTo(state.map)
+        .bindPopup(`${p.name || "Pet"} - ${d.toFixed(1)} miles`);
 
-      window.petMarkers.push(marker);
+      state.markers.push(marker);
+
+    } else {
+
+      const marker = L.marker([p.latitude, p.longitude])
+        .addTo(state.map);
+
+      state.markers.push(marker);
     }
   });
 }
 
-// ---------------- EMAIL ----------------
+// ================= SUBMIT EMAIL =================
 async function submitEmail() {
   const email = document.getElementById("email").value;
 
@@ -257,7 +315,7 @@ async function submitEmail() {
   document.getElementById("status").innerText = "Saved 🐾";
 }
 
-// ---------------- PET SUBMIT ----------------
+// ================= SUBMIT PET =================
 async function submitPet() {
 
   let coords = { latitude: null, longitude: null };
@@ -277,6 +335,7 @@ async function submitPet() {
   const file = document.getElementById("pet_image").files[0];
 
   if (file) {
+
     const fileName = Date.now() + "_" + file.name;
 
     await client.storage
@@ -291,19 +350,19 @@ async function submitPet() {
   }
 
   await client.from("lost_pets").insert([{
-    name: pet_name.value,
-    type: pet_type.value,
-    last_seen_location: location.value,
-    contact_info: contact.value,
-    description: description.value,
+    name: document.getElementById("pet_name").value,
+    type: document.getElementById("pet_type").value,
+    last_seen_location: document.getElementById("location").value,
+    contact_info: document.getElementById("contact").value,
+    description: document.getElementById("description").value,
     latitude: coords.latitude,
     longitude: coords.longitude,
     image_url: imageUrl
   }]);
 
-  document.getElementById("pet_status").innerText = "Pet posted 🐾";
+  document.getElementById("pet_status").innerText = "Posted 🐾";
 
-  loadPets();
+  await loadPets();
 }
 
 </script>
