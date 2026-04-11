@@ -109,6 +109,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
+    let userLocation = null;
     const SUPABASE_URL = "https://ofbuiybymxkviplrbxls.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mYnVpeWJ5bXhrdmlwbHJieGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4Mzg4MjIsImV4cCI6MjA5MTQxNDgyMn0.3r-GEMyfXde5oOHxahYwnfAR6gUfGX5pvwBpPCASO-s";
 
@@ -132,6 +133,19 @@
       error => reject(error)
     );
   });
+}
+    function getDistance(lat1, lon1, lat2, lon2) {
+  const R = 3958.8; // miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+
+  const a =
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI/180) *
+    Math.cos(lat2 * Math.PI/180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
 }
     async function submitPet() {
   let coords = { latitude: null, longitude: null };
@@ -247,7 +261,7 @@ navigator.geolocation.getCurrentPosition(
     const userLat = pos.coords.latitude;
     const userLng = pos.coords.longitude;
 
-    map.setView([userLat, userLng], 12);
+    map.setView([userLocation.lat, userLocation.lng], 12);
 
     // Add user marker
     L.marker([userLat, userLng])
