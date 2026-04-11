@@ -303,7 +303,7 @@ navigator.geolocation.getCurrentPosition(
       .bindPopup("📍 You are here")
       .openPopup();
 
-    drawRadius(); // ✅ draw circle AFTER location is known
+     // ✅ draw circle AFTER location is known
     loadPets();   // ✅ reload pets AFTER location is known
   },
   () => {
@@ -324,7 +324,7 @@ function drawRadius() {
     fillOpacity: 0.1
   }).addTo(map);
 }
-    drawRadius();
+  
 );
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
