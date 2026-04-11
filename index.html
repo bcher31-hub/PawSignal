@@ -201,7 +201,8 @@
       <strong>${pet.name}</strong> (${pet.type})<br/>
       📍 ${pet.last_seen_location}<br/>
       📝 ${pet.description}<br/>
-      📞 ${pet.contact_info}
+      📞 ${pet.contact_info}<br/>
+      ${pet.image_url ? `<img src="${pet.image_url}" style="width:200px; margin-top:10px;" />` : ""}
     </div>
   `).join("");
 
