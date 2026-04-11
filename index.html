@@ -5,7 +5,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PawSignal</title>
-  
 
   <style>
     body {
@@ -40,106 +39,74 @@
       margin-top: 10px;
     }
 
-    textarea {
-      height: 80px;
+    textarea { height: 80px; }
+
+    #map {
+      height: 400px !important;
+      width: 90%;
+      margin: auto;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="hero">
-    <h1>🐾 PawSignal</h1>
-    <h2>Bring them home faster.</h2>
+<div class="hero">
+  <h1>🐾 PawSignal</h1>
+  <h2>Bring them home faster.</h2>
 
-    <p>
-      Helping lost pets get found faster in Tampa and beyond 🐾
-    </p>
+  <p>Helping lost pets get found faster in Tampa and beyond 🐾</p>
 
-    <!-- WAITLIST -->
-    <input id="email" type="email" placeholder="Enter your email" />
-    <br/>
-    <button class="btn" onclick="submitEmail()">Join Waitlist</button>
-    <p id="status"></p>
+  <input id="email" type="email" placeholder="Enter your email" />
+  <br/>
+  <button class="btn" onclick="submitEmail()">Join Waitlist</button>
+  <p id="status"></p>
 
-    <!-- LOST PET FORM -->
-    <div style="margin-top:40px;">
-      <h3>Report a Lost Pet 🐾</h3>
+  <div style="margin-top:40px;">
+    <h3>Report a Lost Pet 🐾</h3>
 
-      <input id="pet_name" placeholder="Pet Name" /><br/>
-      <input id="pet_type" placeholder="Dog or Cat" /><br/>
-      <input id="location" placeholder="Last Seen Location" /><br/>
-      <input id="contact" placeholder="Your Contact Info" /><br/>
+    <input id="pet_name" placeholder="Pet Name" /><br/>
+    <input id="pet_type" placeholder="Dog or Cat" /><br/>
+    <input id="location" placeholder="Last Seen Location" /><br/>
+    <input id="contact" placeholder="Your Contact Info" /><br/>
+    <input type="file" id="pet_image" /><br/>
+    <textarea id="description" placeholder="Description"></textarea><br/>
 
-      <input type="file" id="pet_image" /><br/>
-
-      <textarea id="description" placeholder="Description"></textarea><br/>
-
-      <button class="btn" onclick="submitPet()">Submit Report</button>
-
-      <p id="pet_status"></p>
-    </div>
+    <button class="btn" onclick="submitPet()">Submit Report</button>
+    <p id="pet_status"></p>
   </div>
+</div>
 
-  <div style="margin-top:50px;">
+<div style="margin-top:50px;">
   <h3>Recently Reported Pets 🐾</h3>
   <div id="pet_list"></div>
 </div>
 
-  <!-- ALERT RADIUS -->
+<input id="radius" type="number" placeholder="Alert radius (miles)" value="10" />
 
-  <input id="radius" type="number" placeholder="Alert radius (miles)" value="10" />
-  
-  <div style="margin-top:50px;">
+<div style="margin-top:50px;">
   <h3>Lost Pets Map 🗺️</h3>
-  <div id="map" style="height: 400px; width: 90%; margin: auto;"></div>
-</div>
-  <!-- PROBLEM -->
-<div class="section dark">
-  <h2 style="color:black;">Every minute matters.</h2>
-  <p style="color:#ccc;">
-    Most pets are found within 24 hours — but only if people nearby know quickly.
-  </p>
+  <div id="map"></div>
 </div>
 
-<!-- SOLUTION -->
-<div class="section">
-  <h2>Meet PawSignal</h2>
-  <p>
-    A live network that turns every phone into a search tool for lost pets.
-  </p>
-</div>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <script>
-    let userLocation = null;
-    const SUPABASE_URL = "https://ofbuiybymxkviplrbxls.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mYnVpeWJ5bXhrdmlwbHJieGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4Mzg4MjIsImV4cCI6MjA5MTQxNDgyMn0.3r-GEMyfXde5oOHxahYwnfAR6gUfGX5pvwBpPCASO-s";
+<script>
+console.log("JS LOADED");
 
-    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let map;
+let userLocation = null;
+let radiusCircle;
+window.petMarkers = [];
 
-    async function submitEmail() {
-      const email = document.getElementById("email").value;
+const SUPABASE_URL = "https://ofbuiybymxkviplrbxls.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mYnVpeWJ5bXhrdmlwbHJieGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4Mzg4MjIsImV4cCI6MjA5MTQxNDgyMn0.3r-GEMyfXde5oOHxahYwnfAR6gUfGX5pvwBpPCASO-s";
 
-      const { error } = await client
-        .from("waitlist")
-        .insert([{ email }]);
+const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      document.getElementById("status").innerText =
-        error ? "Error ❌" : "You're on the list 🐾";
-    }
-
-    function getLocation() {
-  return new Promise((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(
-      position => resolve(position.coords),
-      error => reject(error)
-    );
-  });
-}
-    function getDistance(lat1, lon1, lat2, lon2) {
-  const R = 3958.8; // miles
+function getDistance(lat1, lon1, lat2, lon2) {
+  const R = 3958.8;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
 
@@ -151,66 +118,84 @@
 
   return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
 }
-    async function submitPet() {
+
+function drawRadius() {
+  if (!userLocation) return;
+
+  const radius = parseFloat(document.getElementById("radius").value) || 10;
+
+  if (radiusCircle) map.removeLayer(radiusCircle);
+
+  radiusCircle = L.circle([userLocation.lat, userLocation.lng], {
+    radius: radius * 1609,
+    color: "blue",
+    fillOpacity: 0.1
+  }).addTo(map);
+}
+
+async function submitEmail() {
+  const email = document.getElementById("email").value;
+
+  const { error } = await client
+    .from("waitlist")
+    .insert([{ email }]);
+
+  document.getElementById("status").innerText =
+    error ? "Error ❌" : "You're on the list 🐾";
+}
+
+async function submitPet() {
   let coords = { latitude: null, longitude: null };
 
   try {
-    coords = await getLocation();
-  } catch (e) {
-    console.log("Location failed or denied");
-  }
-
-  const file = document.getElementById("pet_image").files[0];
+    const pos = await new Promise((res, rej) =>
+      navigator.geolocation.getCurrentPosition(res, rej)
+    );
+    coords = {
+      latitude: pos.coords.latitude,
+      longitude: pos.coords.longitude
+    };
+  } catch {}
 
   let imageUrl = null;
-
-      
+  const file = document.getElementById("pet_image").files[0];
 
   if (file) {
-  const fileName = Date.now() + "_" + file.name;
+    const fileName = Date.now() + "_" + file.name;
 
-  const { error: uploadError } = await client.storage
-    .from("pet-images")
-    .upload(fileName, file);
-
-  if (uploadError) {
-    console.log("Upload error:", uploadError);
-  } else {
-    const { data: publicUrlData } = await client
-      .storage
+    const { error } = await client.storage
       .from("pet-images")
-      .getPublicUrl(fileName);
+      .upload(fileName, file);
 
-    imageUrl = publicUrlData.publicUrl;
-    console.log("IMAGE URL:", imageUrl);
+    if (!error) {
+      const { data } = client.storage
+        .from("pet-images")
+        .getPublicUrl(fileName);
+
+      imageUrl = data.publicUrl;
+    }
   }
 
-  }
-
-  const { data, error } = await client
-    .from("lost_pets")
-    .insert([{
-      name: document.getElementById("pet_name").value,
-      type: document.getElementById("pet_type").value,
-      last_seen_location: document.getElementById("location").value,
-      contact_info: document.getElementById("contact").value,
-      description: document.getElementById("description").value,
-      latitude: coords.latitude,
-      longitude: coords.longitude,
-      image_url: imageUrl
-    }]);
-
-  console.log("INSERT RESULT:", { data, error });
-  console.log("FINAL image_url BEFORE INSERT:", imageUrl);
+  const { error } = await client.from("lost_pets").insert([{
+    name: document.getElementById("pet_name").value,
+    type: document.getElementById("pet_type").value,
+    last_seen_location: document.getElementById("location").value,
+    contact_info: document.getElementById("contact").value,
+    description: document.getElementById("description").value,
+    latitude: coords.latitude,
+    longitude: coords.longitude,
+    image_url: imageUrl
+  }]);
 
   document.getElementById("pet_status").innerText =
-    error ? "Error submitting ❌" : "Pet reported 🐾";
+    error ? "Error ❌" : "Pet reported 🐾";
 
-  
   loadPets();
-    }
-    
-    async function loadPets() {
+}
+
+async function loadPets() {
+  if (!map) return;
+
   const { data, error } = await client
     .from("lost_pets")
     .select("*")
@@ -223,26 +208,23 @@
     return;
   }
 
-  // ✅ 1. Render list properly
   container.innerHTML = data.map(pet => `
     <div style="border:1px solid #ddd; padding:10px; margin:10px;">
       <strong>${pet.name}</strong> (${pet.type})<br/>
       📍 ${pet.last_seen_location}<br/>
       📝 ${pet.description}<br/>
       📞 ${pet.contact_info}<br/>
-      ${pet.image_url ? `<img src="${pet.image_url}" style="width:200px; margin-top:10px;" />` : ""}
+      ${pet.image_url ? `<img src="${pet.image_url}" style="width:200px;" />` : ""}
     </div>
   `).join("");
 
-  // ✅ 2. Clear old markers (prevents duplicates)
   if (window.petMarkers) {
-    window.petMarkers.forEach(marker => map.removeLayer(marker));
+    window.petMarkers.forEach(m => map.removeLayer(m));
   }
   window.petMarkers = [];
 
-  // ✅ 3. Add map markers properly
-data.forEach(pet => {
-  if (pet.latitude && pet.longitude && userLocation) {
+  data.forEach(pet => {
+    if (!pet.latitude || !pet.longitude || !userLocation) return;
 
     const distance = getDistance(
       userLocation.lat,
@@ -253,34 +235,29 @@ data.forEach(pet => {
 
     const radius = document.getElementById("radius").value || 10;
 
-if (distance <= radius) { // 🔥 10 mile radius
+    if (distance <= radius) {
       const marker = L.marker([pet.latitude, pet.longitude])
         .addTo(map)
         .bindPopup(`
           <b>${pet.name}</b><br/>
           ${pet.type}<br/>
           ${pet.last_seen_location}<br/>
-          📏 ${distance.toFixed(1)} miles away<br/>
-          ${pet.image_url ? `<img src="${pet.image_url}" style="width:120px;" />` : ""}
+          📏 ${distance.toFixed(1)} miles away
         `);
 
       window.petMarkers.push(marker);
     }
-  }
-});
+  });
 }
-  
-let map;
-let userLocation = null;
-let radiusCircle;
-window.petMarkers = [];
 
 window.addEventListener("DOMContentLoaded", () => {
 
-  map = L.map('map').setView([27.9506, -82.4572], 10);
+  console.log("DOM READY");
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
+  map = L.map("map").setView([27.9506, -82.4572], 10);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap"
   }).addTo(map);
 
   navigator.geolocation.getCurrentPosition((pos) => {
@@ -299,10 +276,7 @@ window.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => map.invalidateSize(), 500);
 
     drawRadius();
-
-    setTimeout(() => {
-      loadPets();
-    }, 500);
+    loadPets();
 
   });
 
@@ -310,10 +284,8 @@ window.addEventListener("DOMContentLoaded", () => {
     drawRadius();
     loadPets();
   });
-
 });
-  </script>
-
+</script>
 
 </body>
 </html>
