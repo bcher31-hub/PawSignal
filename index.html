@@ -136,6 +136,9 @@
           description: document.getElementById("description").value
         }]);
 
+      latitude: coords.latitude,
+      longitude: coords.longitude
+
       document.getElementById("pet_status").innerText =
         error ? "Error submitting ❌" : "Pet reported 🐾";
       loadPets();
