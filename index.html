@@ -271,6 +271,21 @@ if (distance <= radius) { // 🔥 10 mile radius
 }
   
    let map = L.map('map').setView([27.9506, -82.4572], 10);
+    function drawRadius() {
+  if (!userLocation) return;
+
+  const radius = document.getElementById("radius").value || 10;
+
+  if (radiusCircle) {
+    map.removeLayer(radiusCircle);
+  }
+
+  radiusCircle = L.circle([userLocation.lat, userLocation.lng], {
+    radius: radius * 1609, // miles → meters
+    color: 'blue',
+    fillOpacity: 0.1
+  }).addTo(map);
+}
 //GEOLOCATION
 let radiusCircle;
 
