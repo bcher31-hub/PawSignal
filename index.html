@@ -163,7 +163,19 @@
     return;
   }
 
-  container.innerHTML = data.map(pet => `
+  container.innerHTML = data.forEach(pet => {
+  if (pet.latitude && pet.longitude) {
+    L.marker([pet.latitude, pet.longitude])
+      .addTo(map)
+      .bindPopup(`
+        <b>${pet.name}</b><br/>
+        ${pet.type}<br/>
+        ${pet.last_seen_location}
+      `);
+  }
+});
+    
+    data.map(pet => `
     <div style="border:1px solid #ddd; padding:10px; margin:10px;">
       <strong>${pet.name}</strong> (${pet.type})<br/>
       📍 ${pet.last_seen_location}<br/>
