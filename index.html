@@ -154,10 +154,15 @@
       .upload(fileName, file);
 
     if (uploadError) {
-      console.log("Upload error:", uploadError);
-    } else {
-      imageUrl = `${SUPABASE_URL}/storage/v1/object/public/pet-images/${fileName}`;
-    }
+  console.log("Upload error:", uploadError);
+} else {
+  const { data } = client
+    .storage
+    .from("pet-images")
+    .getPublicUrl(fileName);
+
+  imageUrl = data.publicUrl;
+}
   }
 
   const { data, error } = await client
