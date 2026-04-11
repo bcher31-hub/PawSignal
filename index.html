@@ -271,6 +271,8 @@ if (distance <= radius) { // 🔥 10 mile radius
 }
   
    let map = L.map('map').setView([27.9506, -82.4572], 10);
+//GEOLOCATION
+let radiusCircle;
 
 navigator.geolocation.getCurrentPosition(
   (pos) => {
@@ -286,12 +288,13 @@ navigator.geolocation.getCurrentPosition(
       .bindPopup("📍 You are here")
       .openPopup();
 
-    loadPets(); // 🔥 reload AFTER location is set
+    drawRadius(); // ✅ draw circle AFTER location is known
+    loadPets();   // ✅ reload pets AFTER location is known
   },
   () => {
     console.log("User denied location");
   }
-  let radiusCircle;
+);
 
 function drawRadius() {
   const radius = document.getElementById("radius").value || 10;
