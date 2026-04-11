@@ -124,6 +124,8 @@
   });
 }
     async function submitPet() {
+      const coords = await getLocation();
+      
       const { error } = await client
         .from("lost_pets")
         .insert([{
