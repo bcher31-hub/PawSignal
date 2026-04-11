@@ -271,24 +271,14 @@ if (distance <= radius) { // 🔥 10 mile radius
 }
   
    let map = L.map('map').setView([27.9506, -82.4572], 10);
-    function drawRadius() {
-  if (!userLocation) return;
-
-const radius = parseFloat(document.getElementById("radius").value) || 10;
-
-  if (radiusCircle) {
-    map.removeLayer(radiusCircle);
-  }
-
-  radiusCircle = L.circle([userLocation.lat, userLocation.lng], {
-    radius: radius * 1609, // miles → meters
-    color: 'blue',
-    fillOpacity: 0.1
-  }).addTo(map);
-}
-//GEOLOCATION
 let radiusCircle;
+let userLocation = null;
 
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+// ✅ SINGLE drawRadius function
 function drawRadius() {
   if (!userLocation) return;
 
@@ -305,6 +295,7 @@ function drawRadius() {
   }).addTo(map);
 }
 
+// ✅ GEOLOCATION (CLEAN)
 navigator.geolocation.getCurrentPosition(
   (pos) => {
     userLocation = {
@@ -319,69 +310,19 @@ navigator.geolocation.getCurrentPosition(
       .bindPopup("📍 You are here")
       .openPopup();
 
-    drawRadius();
-    loadPets();
+    drawRadius();   // AFTER location
+    loadPets();     // AFTER location
   },
   () => {
     console.log("User denied location");
   }
 );
-function drawRadius() {
-  const radius = document.getElementById("radius").value || 10;
 
-  if (radiusCircle) {
-    map.removeLayer(radiusCircle);
-  }
-
-  radiusCircle = L.circle([userLocation.lat, userLocation.lng], {
-    radius: radius * 1609, // miles → meters
-    color: 'blue',
-    fillOpacity: 0.1
-  }).addTo(map);
-}
-  
-);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
-
-    client
-  .channel('realtime-pets')
-  .on(
-    'postgres_changes',
-    {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'lost_pets'
-    },
-    (payload) => {
-      const newPet = payload.new;
-
-if (userLocation && newPet.latitude && newPet.longitude) {
-  const distance = getDistance(
-    userLocation.lat,
-    userLocation.lng,
-    newPet.latitude,
-    newPet.longitude
-  );
-
-  const radius = document.getElementById("radius").value || 10;
-
-  if (distance <= radius) {
-    alert(`🚨 Lost pet nearby!\n${newPet.name} (${distance.toFixed(1)} miles away)`);
-  }
-}
-
-loadPets(); // refresh automatically
-    }
-  )
-  .subscribe();
-   document.getElementById("radius").addEventListener("input", () => {
+// ✅ RADIUS LIVE UPDATE
+document.getElementById("radius").addEventListener("input", () => {
   drawRadius();
   loadPets();
 });
-
   </script>
 
 
