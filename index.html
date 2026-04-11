@@ -319,14 +319,13 @@ navigator.geolocation.getCurrentPosition(
       .bindPopup("📍 You are here")
       .openPopup();
 
-     // ✅ draw circle AFTER location is known
-    loadPets();   // ✅ reload pets AFTER location is known
+    drawRadius();
+    loadPets();
   },
   () => {
     console.log("User denied location");
   }
 );
-
 function drawRadius() {
   const radius = document.getElementById("radius").value || 10;
 
