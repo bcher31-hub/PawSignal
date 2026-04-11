@@ -363,6 +363,7 @@ loadPets(); // refresh automatically
   )
   .subscribe();
    document.getElementById("radius").addEventListener("input", () => {
+  drawRadius();
   loadPets();
 });
 
