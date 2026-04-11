@@ -274,7 +274,7 @@ if (distance <= radius) { // 🔥 10 mile radius
     function drawRadius() {
   if (!userLocation) return;
 
-  const radius = document.getElementById("radius").value || 10;
+const radius = parseFloat(document.getElementById("radius").value) || 10;
 
   if (radiusCircle) {
     map.removeLayer(radiusCircle);
