@@ -237,21 +237,31 @@
   window.petMarkers = [];
 
   // ✅ 3. Add map markers properly
-  data.forEach(pet => {
-    if (pet.latitude && pet.longitude) {
+data.forEach(pet => {
+  if (pet.latitude && pet.longitude && userLocation) {
+
+    const distance = getDistance(
+      userLocation.lat,
+      userLocation.lng,
+      pet.latitude,
+      pet.longitude
+    );
+
+    if (distance <= 10) { // 🔥 10 mile radius
       const marker = L.marker([pet.latitude, pet.longitude])
         .addTo(map)
         .bindPopup(`
-  <b>${pet.name}</b><br/>
-  ${pet.type}<br/>
-  ${pet.last_seen_location}<br/>
-  ${pet.image_url ? `<img src="${pet.image_url}" style="width:120px; margin-top:5px;" />` : ""}
-`);
-       
+          <b>${pet.name}</b><br/>
+          ${pet.type}<br/>
+          ${pet.last_seen_location}<br/>
+          📏 ${distance.toFixed(1)} miles away<br/>
+          ${pet.image_url ? `<img src="${pet.image_url}" style="width:120px;" />` : ""}
+        `);
 
       window.petMarkers.push(marker);
     }
-  });
+  }
+});
 }
   
    let map = L.map('map').setView([27.9506, -82.4572], 10);
