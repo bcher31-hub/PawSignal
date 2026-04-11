@@ -223,10 +223,12 @@
       const marker = L.marker([pet.latitude, pet.longitude])
         .addTo(map)
         .bindPopup(`
-          <b>${pet.name}</b><br/>
-          ${pet.type}<br/>
-          ${pet.last_seen_location}
-        `);
+  <b>${pet.name}</b><br/>
+  ${pet.type}<br/>
+  ${pet.last_seen_location}<br/>
+  ${pet.image_url ? `<img src="${pet.image_url}" style="width:150px; margin-top:5px;" />` : ""}
+`);
+       
 
       window.petMarkers.push(marker);
     }
