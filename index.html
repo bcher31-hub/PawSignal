@@ -131,24 +131,32 @@
   });
 }
     async function submitPet() {
-      const coords = await getLocation();
-      
-      const { error } = await client
-        .from("lost_pets")
-        .insert([{
-          name: document.getElementById("pet_name").value,
-          type: document.getElementById("pet_type").value,
-          last_seen_location: document.getElementById("location").value,
-          contact_info: document.getElementById("contact").value,
-          description: document.getElementById("description").value,
+  let coords = { latitude: null, longitude: null };
 
-          latitude: coords.latitude,
-          longitude: coords.longitude
-        }]);
+  try {
+    coords = await getLocation();
+  } catch (e) {
+    console.log("Location failed or denied");
+  }
 
-      document.getElementById("pet_status").innerText =
-        error ? "Error submitting ❌" : "Pet reported 🐾";
-      loadPets();
+  const { data, error } = await client
+    .from("lost_pets")
+    .insert([{
+      name: document.getElementById("pet_name").value,
+      type: document.getElementById("pet_type").value,
+      last_seen_location: document.getElementById("location").value,
+      contact_info: document.getElementById("contact").value,
+      description: document.getElementById("description").value,
+      latitude: coords.latitude,
+      longitude: coords.longitude
+    }]);
+
+  console.log("INSERT RESULT:", { data, error });
+
+  document.getElementById("pet_status").innerText =
+    error ? "Error submitting ❌" : "Pet reported 🐾";
+
+  loadPets();
     }
     
     async function loadPets() {
