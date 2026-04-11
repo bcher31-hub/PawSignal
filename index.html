@@ -128,6 +128,7 @@
 
       document.getElementById("pet_status").innerText =
         error ? "Error submitting ❌" : "Pet reported 🐾";
+      loadPets();
     }
     async function loadPets() {
   const { data, error } = await client
