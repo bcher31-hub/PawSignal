@@ -291,6 +291,22 @@ navigator.geolocation.getCurrentPosition(
   () => {
     console.log("User denied location");
   }
+  let radiusCircle;
+
+function drawRadius() {
+  const radius = document.getElementById("radius").value || 10;
+
+  if (radiusCircle) {
+    map.removeLayer(radiusCircle);
+  }
+
+  radiusCircle = L.circle([userLocation.lat, userLocation.lng], {
+    radius: radius * 1609, // miles → meters
+    color: 'blue',
+    fillOpacity: 0.1
+  }).addTo(map);
+}
+    drawRadius();
 );
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -328,8 +344,10 @@ loadPets(); // refresh automatically
     }
   )
   .subscribe();
-    loadPets();
   </script>
+  document.getElementById("radius").addEventListener("input", () => {
+  loadPets();
+});
 
 </body>
 </html>
