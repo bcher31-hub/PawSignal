@@ -289,6 +289,22 @@ const radius = parseFloat(document.getElementById("radius").value) || 10;
 //GEOLOCATION
 let radiusCircle;
 
+function drawRadius() {
+  if (!userLocation) return;
+
+  const radius = parseFloat(document.getElementById("radius").value) || 10;
+
+  if (radiusCircle) {
+    map.removeLayer(radiusCircle);
+  }
+
+  radiusCircle = L.circle([userLocation.lat, userLocation.lng], {
+    radius: radius * 1609,
+    color: 'blue',
+    fillOpacity: 0.1
+  }).addTo(map);
+}
+
 navigator.geolocation.getCurrentPosition(
   (pos) => {
     userLocation = {
