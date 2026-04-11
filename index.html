@@ -133,11 +133,11 @@
           type: document.getElementById("pet_type").value,
           last_seen_location: document.getElementById("location").value,
           contact_info: document.getElementById("contact").value,
-          description: document.getElementById("description").value
-        }]);
+          description: document.getElementById("description").value,
 
-      latitude: coords.latitude,
-      longitude: coords.longitude
+          latitude: coords.latitude,
+          longitude: coords.longitude
+        }]);
 
       document.getElementById("pet_status").innerText =
         error ? "Error submitting ❌" : "Pet reported 🐾";
