@@ -270,7 +270,7 @@ if (distance <= radius) { // 🔥 10 mile radius
 });
 }
   
-   let map;
+let map;
 let userLocation = null;
 let radiusCircle;
 window.petMarkers = [];
@@ -282,8 +282,6 @@ window.addEventListener("DOMContentLoaded", () => {
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
-
-  setTimeout(() => map.invalidateSize(), 300);
 
   navigator.geolocation.getCurrentPosition((pos) => {
 
@@ -298,57 +296,21 @@ window.addEventListener("DOMContentLoaded", () => {
       .addTo(map)
       .bindPopup("📍 You are here");
 
+    setTimeout(() => map.invalidateSize(), 500);
+
     drawRadius();
-    loadPets();
+
+    setTimeout(() => {
+      loadPets();
+    }, 500);
 
   });
 
-});
+  document.getElementById("radius").addEventListener("input", () => {
+    drawRadius();
+    loadPets();
+  });
 
-// ✅ SINGLE drawRadius function
-function drawRadius() {
-  if (!userLocation) return;
-
-  const radius = parseFloat(document.getElementById("radius").value) || 10;
-
-  if (radiusCircle) {
-    map.removeLayer(radiusCircle);
-  }
-
-  radiusCircle = L.circle([userLocation.lat, userLocation.lng], {
-    radius: radius * 1609,
-    color: 'blue',
-    fillOpacity: 0.1
-  }).addTo(map);
-}
-
-// ✅ GEOLOCATION (CLEAN)
-navigator.geolocation.getCurrentPosition(
-  (pos) => {
-    userLocation = {
-      lat: pos.coords.latitude,
-      lng: pos.coords.longitude
-    };
-
-    map.setView([userLocation.lat, userLocation.lng], 12);
-
-    L.marker([userLocation.lat, userLocation.lng])
-      .addTo(map)
-      .bindPopup("📍 You are here")
-      .openPopup();
-
-    drawRadius();   // AFTER location
-    loadPets();     // AFTER location
-  },
-  () => {
-    console.log("User denied location");
-  }
-);
-
-// ✅ RADIUS LIVE UPDATE
-document.getElementById("radius").addEventListener("input", () => {
-  drawRadius();
-  loadPets();
 });
   </script>
 
