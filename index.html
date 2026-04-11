@@ -251,7 +251,9 @@ data.forEach(pet => {
       pet.longitude
     );
 
-    if (distance <= 10) { // 🔥 10 mile radius
+    const radius = document.getElementById("radius").value || 10;
+
+if (distance <= radius) { // 🔥 10 mile radius
       const marker = L.marker([pet.latitude, pet.longitude])
         .addTo(map)
         .bindPopup(`
@@ -305,8 +307,24 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       table: 'lost_pets'
     },
     (payload) => {
-      console.log("New pet reported:", payload.new);
-      loadPets(); // refresh automatically
+      const newPet = payload.new;
+
+if (userLocation && newPet.latitude && newPet.longitude) {
+  const distance = getDistance(
+    userLocation.lat,
+    userLocation.lng,
+    newPet.latitude,
+    newPet.longitude
+  );
+
+  const radius = document.getElementById("radius").value || 10;
+
+  if (distance <= radius) {
+    alert(`🚨 Lost pet nearby!\n${newPet.name} (${distance.toFixed(1)} miles away)`);
+  }
+}
+
+loadPets(); // refresh automatically
     }
   )
   .subscribe();
