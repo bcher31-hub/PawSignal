@@ -240,13 +240,46 @@
   });
 }
   
-    let map = L.map('map').setView([27.9506, -82.4572], 10);
+   let map = L.map('map').setView([27.9506, -82.4572], 10);
+
+navigator.geolocation.getCurrentPosition(
+  (pos) => {
+    const userLat = pos.coords.latitude;
+    const userLng = pos.coords.longitude;
+
+    map.setView([userLat, userLng], 12);
+
+    // Add user marker
+    L.marker([userLat, userLng])
+      .addTo(map)
+      .bindPopup("📍 You are here")
+      .openPopup();
+  },
+  () => {
+    console.log("User denied location");
+  }
+);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
 loadPets();
+    client
+  .channel('realtime-pets')
+  .on(
+    'postgres_changes',
+    {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'lost_pets'
+    },
+    (payload) => {
+      console.log("New pet reported:", payload.new);
+      loadPets(); // refresh automatically
+    }
+  )
+  .subscribe();
   </script>
 
 </body>
