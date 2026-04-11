@@ -183,6 +183,7 @@
     }]);
 
   console.log("INSERT RESULT:", { data, error });
+  console.log("FINAL image_url BEFORE INSERT:", imageUrl);
 
   document.getElementById("pet_status").innerText =
     error ? "Error submitting ❌" : "Pet reported 🐾";
