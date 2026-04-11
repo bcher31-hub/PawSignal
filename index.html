@@ -164,7 +164,7 @@
     return;
   }
 
-  // ✅ 1. Render list correctly
+  // ✅ 1. Render list properly
   container.innerHTML = data.map(pet => `
     <div style="border:1px solid #ddd; padding:10px; margin:10px;">
       <strong>${pet.name}</strong> (${pet.type})<br/>
@@ -174,13 +174,13 @@
     </div>
   `).join("");
 
-  // ✅ 2. Clear old markers (IMPORTANT FIX)
+  // ✅ 2. Clear old markers (prevents duplicates)
   if (window.petMarkers) {
     window.petMarkers.forEach(marker => map.removeLayer(marker));
   }
   window.petMarkers = [];
 
-  // ✅ 3. Add map markers correctly
+  // ✅ 3. Add map markers properly
   data.forEach(pet => {
     if (pet.latitude && pet.longitude) {
       const marker = L.marker([pet.latitude, pet.longitude])
