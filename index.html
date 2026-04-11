@@ -150,6 +150,7 @@
         error ? "Error submitting ❌" : "Pet reported 🐾";
       loadPets();
     }
+    
     async function loadPets() {
   const { data, error } = await client
     .from("lost_pets")
@@ -163,19 +164,8 @@
     return;
   }
 
-  container.innerHTML = data.forEach(pet => {
-  if (pet.latitude && pet.longitude) {
-    L.marker([pet.latitude, pet.longitude])
-      .addTo(map)
-      .bindPopup(`
-        <b>${pet.name}</b><br/>
-        ${pet.type}<br/>
-        ${pet.last_seen_location}
-      `);
-  }
-});
-    
-    data.map(pet => `
+  // ✅ 1. Render list correctly
+  container.innerHTML = data.map(pet => `
     <div style="border:1px solid #ddd; padding:10px; margin:10px;">
       <strong>${pet.name}</strong> (${pet.type})<br/>
       📍 ${pet.last_seen_location}<br/>
@@ -183,6 +173,27 @@
       📞 ${pet.contact_info}
     </div>
   `).join("");
+
+  // ✅ 2. Clear old markers (IMPORTANT FIX)
+  if (window.petMarkers) {
+    window.petMarkers.forEach(marker => map.removeLayer(marker));
+  }
+  window.petMarkers = [];
+
+  // ✅ 3. Add map markers correctly
+  data.forEach(pet => {
+    if (pet.latitude && pet.longitude) {
+      const marker = L.marker([pet.latitude, pet.longitude])
+        .addTo(map)
+        .bindPopup(`
+          <b>${pet.name}</b><br/>
+          ${pet.type}<br/>
+          ${pet.last_seen_location}
+        `);
+
+      window.petMarkers.push(marker);
+    }
+  });
 }
     loadPets();
     let map = L.map('map').setView([27.9506, -82.4572], 10);
