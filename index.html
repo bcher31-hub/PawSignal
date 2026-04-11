@@ -290,9 +290,310 @@ window.addEventListener("DOMContentLoaded", () => {
       .bindPopup("📍 You are here");
 
     setTimeout(() => map.invalidateSize(), 500);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PawSignal</title>
 
-    drawRadius();
-    loadPets();
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #F8FAFC;
+      text-align: center;
+    }
+
+    .hero {
+      padding: 70px 20px 40px;
+    }
+
+    h1 { font-size: 48px; }
+    h2 { color: #2F80ED; }
+
+    .btn {
+      background: #EB5757;
+      color: white;
+      padding: 14px 24px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    input, textarea {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 250px;
+      margin-top: 10px;
+    }
+
+    textarea { height: 80px; }
+
+    #map {
+      height: 400px !important;
+      width: 90%;
+      margin: auto;
+      border-radius: 10px;
+    }
+
+    .section {
+      padding: 60px 20px;
+    }
+
+    .dark {
+      background: #111827;
+      color: white;
+    }
+
+    #radius {
+      margin-top: 20px;
+    }
+
+    #pet_list {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>🐾 PawSignal</h1>
+  <h2>Bring them home faster.</h2>
+  <p>Helping lost pets get found faster in Tampa and beyond 🐾</p>
+
+  <input id="email" type="email" placeholder="Enter your email" />
+  <br/>
+  <button class="btn" onclick="submitEmail()">Join Waitlist</button>
+  <p id="status"></p>
+
+  <div style="margin-top:40px;">
+    <h3>Report a Lost Pet 🐾</h3>
+
+    <input id="pet_name" placeholder="Pet Name" /><br/>
+    <input id="pet_type" placeholder="Dog or Cat" /><br/>
+    <input id="location" placeholder="Last Seen Location" /><br/>
+    <input id="contact" placeholder="Contact Info" /><br/>
+    <input type="file" id="pet_image" /><br/>
+    <textarea id="description" placeholder="Description"></textarea><br/>
+
+    <button class="btn" onclick="submitPet()">Submit Report</button>
+    <p id="pet_status"></p>
+  </div>
+</div>
+
+<!-- LIST -->
+<div id="pet_list"></div>
+
+<!-- RADIUS -->
+<div>
+  <h3>Alert Radius</h3>
+  <input id="radius" type="number" value="10" />
+</div>
+
+<!-- MAP -->
+<div style="margin-top:40px;">
+  <h3>Lost Pets Map 🗺️</h3>
+  <div id="map"></div>
+</div>
+
+<!-- MESSAGE AFTER MAP (IMPORTANT REQUIREMENT) -->
+<div class="section dark">
+  <h2>Every minute matters.</h2>
+  <p>Most pets are found within 24 hours — but only if people nearby know quickly.</p>
+</div>
+
+<div class="section">
+  <h2>Meet PawSignal</h2>
+  <p>A live network that turns every phone into a search tool for lost pets.</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+console.log("APP START");
+
+let map;
+let userLocation = null;
+let radiusCircle = null;
+window.petMarkers = [];
+
+const SUPABASE_URL = "https://ofbuiybymxkviplrbxls.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mYnVpeWJ5bXhrdmlwbHJieGxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4Mzg4MjIsImV4cCI6MjA5MTQxNDgyMn0.3r-GEMyfXde5oOHxahYwnfAR6gUfGX5pvwBpPCASO-s";
+
+const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ---------------- DISTANCE ----------------
+function getDistance(lat1, lon1, lat2, lon2) {
+  const R = 3958.8;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+
+  const a =
+    Math.sin(dLat/2)**2 +
+    Math.cos(lat1*Math.PI/180) *
+    Math.cos(lat2*Math.PI/180) *
+    Math.sin(dLon/2)**2;
+
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+
+// ---------------- RADIUS ----------------
+function drawRadius() {
+  if (!map || !userLocation) return;
+
+  const radius = parseFloat(document.getElementById("radius").value) || 10;
+
+  if (radiusCircle) map.removeLayer(radiusCircle);
+
+  radiusCircle = L.circle([userLocation.lat, userLocation.lng], {
+    radius: radius * 1609,
+    color: "blue",
+    fillOpacity: 0.1
+  }).addTo(map);
+}
+
+// ---------------- EMAIL ----------------
+async function submitEmail() {
+  const email = document.getElementById("email").value;
+
+  const { error } = await client.from("waitlist").insert([{ email }]);
+
+  document.getElementById("status").innerText =
+    error ? "Error ❌" : "You're on the list 🐾";
+}
+
+// ---------------- PET SUBMIT ----------------
+async function submitPet() {
+  let coords = { latitude: null, longitude: null };
+
+  try {
+    const pos = await new Promise((res, rej) =>
+      navigator.geolocation.getCurrentPosition(res, rej)
+    );
+
+    coords = {
+      latitude: pos.coords.latitude,
+      longitude: pos.coords.longitude
+    };
+  } catch {}
+
+  let imageUrl = null;
+  const file = document.getElementById("pet_image").files[0];
+
+  if (file) {
+    const fileName = Date.now() + "_" + file.name;
+
+    const { error } = await client.storage
+      .from("pet-images")
+      .upload(fileName, file);
+
+    if (!error) {
+      const { data } = client.storage
+        .from("pet-images")
+        .getPublicUrl(fileName);
+
+      imageUrl = data.publicUrl;
+    }
+  }
+
+  await client.from("lost_pets").insert([{
+    name: document.getElementById("pet_name").value,
+    type: document.getElementById("pet_type").value,
+    last_seen_location: document.getElementById("location").value,
+    contact_info: document.getElementById("contact").value,
+    description: document.getElementById("description").value,
+    latitude: coords.latitude,
+    longitude: coords.longitude,
+    image_url: imageUrl
+  }]);
+
+  document.getElementById("pet_status").innerText = "Pet reported 🐾";
+
+  loadPets();
+}
+
+// ---------------- LOAD PETS ----------------
+async function loadPets() {
+  if (!map || !userLocation) return;
+
+  const { data } = await client
+    .from("lost_pets")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  const container = document.getElementById("pet_list");
+
+  container.innerHTML = data.map(pet => `
+    <div style="border:1px solid #ddd; margin:10px; padding:10px;">
+      <b>${pet.name}</b> (${pet.type})<br/>
+      📍 ${pet.last_seen_location}<br/>
+      📝 ${pet.description}<br/>
+      📞 ${pet.contact_info}<br/>
+      ${pet.image_url ? `<img src="${pet.image_url}" width="180"/>` : ""}
+    </div>
+  `).join("");
+
+  if (window.petMarkers) {
+    window.petMarkers.forEach(m => map.removeLayer(m));
+  }
+  window.petMarkers = [];
+
+  const radius = parseFloat(document.getElementById("radius").value) || 10;
+
+  data.forEach(pet => {
+    if (!pet.latitude || !pet.longitude) return;
+
+    const distance = getDistance(
+      userLocation.lat,
+      userLocation.lng,
+      pet.latitude,
+      pet.longitude
+    );
+
+    if (distance <= radius) {
+      const marker = L.marker([pet.latitude, pet.longitude])
+        .addTo(map)
+        .bindPopup(`${pet.name} - ${distance.toFixed(1)} miles away`);
+
+      window.petMarkers.push(marker);
+    }
+  });
+}
+
+// ---------------- INIT ----------------
+window.addEventListener("DOMContentLoaded", () => {
+
+  map = L.map("map").setView([27.95, -82.46], 10);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap"
+  }).addTo(map);
+
+  navigator.geolocation.getCurrentPosition((pos) => {
+
+    userLocation = {
+      lat: pos.coords.latitude,
+      lng: pos.coords.longitude
+    };
+
+    map.setView([userLocation.lat, userLocation.lng], 12);
+
+    L.marker([userLocation.lat, userLocation.lng])
+      .addTo(map)
+      .bindPopup("📍 You are here");
+
+    setTimeout(() => {
+      map.invalidateSize();
+      drawRadius();
+      loadPets();
+    }, 500);
 
   });
 
@@ -300,6 +601,7 @@ window.addEventListener("DOMContentLoaded", () => {
     drawRadius();
     loadPets();
   });
+
 });
 </script>
 
