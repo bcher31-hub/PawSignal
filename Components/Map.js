@@ -106,3 +106,25 @@ export default function Map({ pets, setPets }) {
     </div>
   );
 }
+useEffect(() => {
+
+  const channel = supabase
+    .channel("alerts")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "alerts",
+      },
+      (payload) => {
+        const alert = payload.new;
+
+        showToast(alert.message);
+      }
+    )
+    .subscribe();
+
+  return () => supabase.removeChannel(channel);
+
+}, []);
