@@ -1,0 +1,41 @@
+import { createClient } from "@supabase/supabase-js";
+
+export default async function handler(req: Request) {
+
+  const { imageUrl, petId } = await req.json();
+
+  // STEP 1: send image to embedding model
+  const embedding = await generateImageEmbedding(imageUrl);
+
+  // STEP 2: store in Supabase vector DB
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  await supabase.from("pet_embeddings").insert({
+    pet_id: petId,
+    image_url: imageUrl,
+    embedding
+  });
+
+  return new Response("stored");
+}
+
+// MOCK (replace with CLIP/OpenAI vision embedding)
+async function generateImageEmbedding(url: string) {
+  const res = await fetch("https://api.openai.com/v1/embeddings", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${Deno.env.get("OPENAI_API_KEY")}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: "text-embedding-3-large",
+      input: url
+    })
+  });
+
+  const data = await res.json();
+  return data.data[0].embedding;
+}
