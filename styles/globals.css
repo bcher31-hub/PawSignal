@@ -1,46 +1,70 @@
-body {
+/* RESET */
+* {
+  box-sizing: border-box;
   margin: 0;
+  padding: 0;
+}
+
+/* BASE */
+body {
   font-family: Arial, sans-serif;
-  background: #f8fafc;
+  background: #F8FAFC;
   text-align: center;
+  padding: 0 10px;
+}
+
+/* HERO */
+.hero {
+  padding: 40px 10px;
 }
 
 h1 {
-  font-size: 48px;
+  font-size: 36px;
 }
 
 h2 {
-  color: #2f80ed;
+  color: #2F80ED;
 }
 
-button {
-  background: #eb5757;
+/* BUTTON */
+.btn {
+  background: #EB5757;
   color: white;
   padding: 12px 20px;
   border: none;
   border-radius: 10px;
   cursor: pointer;
+  margin-top: 10px;
+  width: 100%;
+  max-width: 350px;
 }
 
-input,
-textarea {
-  padding: 10px;
-  width: 250px;
-  margin-top: 10px;
+/* INPUTS */
+input, textarea {
+  padding: 12px;
   border-radius: 8px;
   border: 1px solid #ccc;
+  width: 100%;
+  max-width: 350px;
+  margin-top: 10px;
 }
 
 textarea {
   height: 80px;
 }
 
-.form {
-  margin-top: 40px;
+/* MAP */
+#map {
+  height: 300px;
+  width: 100%;
+  max-width: 600px;
+  margin: 20px auto;
+  border-radius: 10px;
 }
 
+/* SECTIONS */
 .section {
-  padding: 50px 20px;
+  padding: 40px 20px;
 }
 
 .section.dark {
@@ -48,9 +72,26 @@ textarea {
   color: white;
 }
 
-#map {
-  height: 400px;
-  width: 90%;
-  margin: auto;
-  border-radius: 10px;
+.section.dark p {
+  color: #d1d5db;
+}
+
+/* PET LIST */
+#pet_list {
+  margin-top: 20px;
+}
+
+/* MOBILE OPTIMIZATION */
+@media (min-width: 768px) {
+  h1 {
+    font-size: 48px;
+  }
+
+  .hero {
+    padding: 80px 20px;
+  }
+
+  #map {
+    height: 400px;
+  }
 }
