@@ -1,1 +1,56 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f8fafc;
+  text-align: center;
+}
 
+h1 {
+  font-size: 48px;
+}
+
+h2 {
+  color: #2f80ed;
+}
+
+button {
+  background: #eb5757;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+input,
+textarea {
+  padding: 10px;
+  width: 250px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+textarea {
+  height: 80px;
+}
+
+.form {
+  margin-top: 40px;
+}
+
+.section {
+  padding: 50px 20px;
+}
+
+.section.dark {
+  background: #111827;
+  color: white;
+}
+
+#map {
+  height: 400px;
+  width: 90%;
+  margin: auto;
+  border-radius: 10px;
+}
