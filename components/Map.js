@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
-import { supabase } from "../../lib/supabaseClient";
-import { getDistanceMiles } from "../../lib/geo";
+import { supabase } from "@/lib/supabaseClient";
+import { getDistanceMiles } from "@/lib/geo";
 
 export default function Map({ pets, setPets }) {
   const mapRef = useRef(null);
