@@ -61,7 +61,8 @@ export default function UploadForm() {
 
       if (error) {
         console.error("Insert error:", error.message);
-        setMsg("Database insert failed");
+        setMsg(error.message);
+        console.log(error);
         setLoading(false);
         return;
       }
