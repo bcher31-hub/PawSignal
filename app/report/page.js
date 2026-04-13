@@ -7,38 +7,43 @@ export default function Report() {
   const [msg, setMsg] = useState("");
 
   async function submit(e) {
-    e.preventDefault();
+  e.preventDefault();
 
-    const form = new FormData(e.target);
-    const file = form.get("image");
+  const form = new FormData(e.target);
+  const file = form.get("image");
 
-    let imageUrl = null;
+  let imageUrl = null;
 
-    if (file.name) {
-      const fileName = Date.now() + "_" + file.name;
+  // ✅ SAFETY CHECK (fixes build/runtime crash)
+  if (file && file instanceof File && file.name) {
+    const fileName = `${Date.now()}_${file.name}`;
 
-      await supabase.storage.from("pet-images").upload(fileName, file);
+    const { error: uploadError } = await supabase.storage
+      .from("pet-images")
+      .upload(fileName, file);
 
+    if (!uploadError) {
       const { data } = supabase.storage
         .from("pet-images")
         .getPublicUrl(fileName);
 
       imageUrl = data.publicUrl;
     }
-
-    const { error } = await supabase.from("lost_pets").insert([
-      {
-        name: form.get("name"),
-        type: form.get("type"),
-        description: form.get("description"),
-        latitude: 0,
-        longitude: 0,
-        image_url: imageUrl,
-      },
-    ]);
-
-    setMsg(error ? "Error" : "Posted 🐾");
   }
+
+  const { error } = await supabase.from("lost_pets").insert([
+    {
+      name: form.get("name"),
+      type: form.get("type"),
+      description: form.get("description"),
+      latitude: 0,
+      longitude: 0,
+      image_url: imageUrl,
+    },
+  ]);
+
+  setMsg(error ? "Error" : "Posted 🐾");
+}
 
   return (
     <form onSubmit={submit} style={{ padding: 20 }}>
