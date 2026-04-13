@@ -1,50 +1,53 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import L from "leaflet";
 import { supabase } from "@/lib/supabaseClient";
 import { getDistanceMiles } from "@/lib/geo";
 
 export default function Map({ pets, setPets }) {
   const mapRef = useRef(null);
+  const leafletMap = useRef(null);
   const markerLayer = useRef([]);
   const [user, setUser] = useState(null);
   const [radius, setRadius] = useState(10);
 
-  // INIT MAP ONLY ONCE
+  // 🟢 INIT MAP (CLIENT ONLY SAFE)
   useEffect(() => {
-    if (mapRef.current) return;
+    if (typeof window === "undefined") return;
+    if (leafletMap.current) return;
 
-    mapRef.current = L.map("map").setView([27.95, -82.46], 10);
+    import("leaflet").then((L) => {
+      leafletMap.current = L.map("map").setView([27.95, -82.46], 10);
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap",
-    }).addTo(mapRef.current);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap",
+      }).addTo(leafletMap.current);
 
-    navigator.geolocation.getCurrentPosition((pos) => {
-      const u = {
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude,
-      };
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const u = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        };
 
-      setUser(u);
+        setUser(u);
 
-      mapRef.current.setView([u.lat, u.lng], 12);
+        leafletMap.current.setView([u.lat, u.lng], 12);
 
-      L.marker([u.lat, u.lng])
-        .addTo(mapRef.current)
-        .bindPopup("📍 You are here");
+        L.marker([u.lat, u.lng])
+          .addTo(leafletMap.current)
+          .bindPopup("📍 You are here");
+      });
     });
   }, []);
 
-  // LOAD PETS (REAL-TIME SAFE)
+  // 🟢 LOAD PETS + REALTIME UPDATES
   useEffect(() => {
-    const load = async () => {
+    const loadPets = async () => {
       const { data } = await supabase.from("lost_pets").select("*");
       setPets(data || []);
     };
 
-    load();
+    loadPets();
 
     const channel = supabase
       .channel("pets")
@@ -60,33 +63,59 @@ export default function Map({ pets, setPets }) {
     return () => supabase.removeChannel(channel);
   }, []);
 
-  // UPDATE MAP MARKERS
+  // 🟢 ALERTS LISTENER (FIXED - MERGED PROPERLY)
   useEffect(() => {
-    if (!mapRef.current || !user) return;
+    const channel = supabase
+      .channel("alerts")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "alerts",
+        },
+        (payload) => {
+          const alert = payload.new;
+          if (typeof window !== "undefined") {
+            alert(alert.message);
+          }
+        }
+      )
+      .subscribe();
 
-    markerLayer.current.forEach((m) => mapRef.current.removeLayer(m));
-    markerLayer.current = [];
+    return () => supabase.removeChannel(channel);
+  }, []);
 
-    pets.forEach((p) => {
-      if (!p.latitude || !p.longitude) return;
+  // 🟢 UPDATE MARKERS
+  useEffect(() => {
+    if (!leafletMap.current || !user) return;
 
-      const d = getDistanceMiles(
-        user.lat,
-        user.lng,
-        p.latitude,
-        p.longitude
+    import("leaflet").then((L) => {
+      markerLayer.current.forEach((m) =>
+        leafletMap.current.removeLayer(m)
       );
+      markerLayer.current = [];
 
-      if (d <= radius) {
-        const marker = L.marker([p.latitude, p.longitude])
-          .addTo(mapRef.current)
-          .bindPopup(`
-            <b>${p.name}</b><br/>
-            ${d.toFixed(1)} miles away
-          `);
+      pets.forEach((p) => {
+        if (!p.latitude || !p.longitude) return;
 
-        markerLayer.current.push(marker);
-      }
+        const d = getDistanceMiles(
+          user.lat,
+          user.lng,
+          p.latitude,
+          p.longitude
+        );
+
+        if (d <= radius) {
+          const marker = L.marker([p.latitude, p.longitude])
+            .addTo(leafletMap.current)
+            .bindPopup(
+              `<b>${p.name}</b><br/>${d.toFixed(1)} miles away`
+            );
+
+          markerLayer.current.push(marker);
+        }
+      });
     });
   }, [pets, user, radius]);
 
@@ -106,25 +135,3 @@ export default function Map({ pets, setPets }) {
     </div>
   );
 }
-useEffect(() => {
-
-  const channel = supabase
-    .channel("alerts")
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "alerts",
-      },
-      (payload) => {
-        const alert = payload.new;
-
-        showToast(alert.message);
-      }
-    )
-    .subscribe();
-
-  return () => supabase.removeChannel(channel);
-
-}, []);
