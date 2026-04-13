@@ -64,27 +64,7 @@ export default function Map({ pets, setPets }) {
   }, []);
 
   // 🟢 ALERTS LISTENER (FIXED - MERGED PROPERLY)
-  useEffect(() => {
-    const channel = supabase
-      .channel("alerts")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "alerts",
-        },
-        (payload) => {
-          const alert = payload.new;
-          if (typeof window !== "undefined") {
-            alert(alert.message);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => supabase.removeChannel(channel);
-  }, []);
+ 
 
   // 🟢 UPDATE MARKERS
   useEffect(() => {
