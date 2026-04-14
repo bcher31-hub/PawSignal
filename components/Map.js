@@ -7,24 +7,26 @@ export default function Map({ pets = [] }) {
   const mapRef = useRef(null);
   const leafletRef = useRef(null);
 
-  const markersRef = useRef([]);
+  const clusterRef = useRef(null);
+  const heatRef = useRef(null);
   const circleRef = useRef(null);
 
   const [user, setUser] = useState(null);
   const [radius, setRadius] = useState(10);
   const [nearbyCount, setNearbyCount] = useState(0);
+  const [zone, setZone] = useState("CLEAR");
 
   // =========================
-  // 1. INIT MAP (SSR SAFE + LAZY LOAD)
+  // 🧱 INIT MAP (SAFE SSR)
   // =========================
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (leafletRef.current) return;
+    if (mapRef.current) return;
 
-    let isMounted = true;
-
-    import("leaflet").then((L) => {
-      if (!isMounted) return;
+    (async () => {
+      const L = (await import("leaflet")).default;
+      await import("leaflet.markercluster");
+      await import("leaflet.heat");
 
       leafletRef.current = L;
 
@@ -35,72 +37,76 @@ export default function Map({ pets = [] }) {
         attribution: "© OpenStreetMap",
       }).addTo(map);
 
-      // safe geolocation
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const location = {
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude,
-            };
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const u = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          };
 
-            setUser(location);
+          setUser(u);
 
-            map.setView([location.lat, location.lng], 12);
+          map.setView([u.lat, u.lng], 12);
 
-            L.marker([location.lat, location.lng])
-              .addTo(map)
-              .bindPopup("📍 You are here");
-          },
-          () => {
-            setUser({ lat: 27.95, lng: -82.46 });
-          }
-        );
-      } else {
-        setUser({ lat: 27.95, lng: -82.46 });
-      }
-    });
-
-    return () => {
-      isMounted = false;
-    };
+          L.marker([u.lat, u.lng])
+            .addTo(map)
+            .bindPopup("📍 You are here");
+        },
+        () => {
+          setUser({ lat: 27.95, lng: -82.46 });
+        }
+      );
+    })();
   }, []);
 
   // =========================
-  // 2. RENDER ENGINE (SAFE + CONTROLLED)
+  // 🧠 RENDER ENGINE (HARDENED)
   // =========================
   useEffect(() => {
-    if (!mapRef.current || !leafletRef.current || !user) return;
+    if (!mapRef.current || !user || !leafletRef.current) return;
 
     const L = leafletRef.current;
 
-    // clear markers
-    markersRef.current.forEach((m) => {
-      mapRef.current.removeLayer(m);
-    });
-    markersRef.current = [];
+    // =========================
+    // 🧹 CLEAN OLD LAYERS
+    // =========================
+    if (clusterRef.current) {
+      mapRef.current.removeLayer(clusterRef.current);
+    }
 
-    // clear circle
+    if (heatRef.current) {
+      mapRef.current.removeLayer(heatRef.current);
+    }
+
     if (circleRef.current) {
       mapRef.current.removeLayer(circleRef.current);
     }
 
-    // draw radius
+    // =========================
+    // 📦 CLUSTER SYSTEM
+    // =========================
+    const cluster = L.markerClusterGroup();
+    clusterRef.current = cluster;
+    mapRef.current.addLayer(cluster);
+
+    // =========================
+    // 📍 RADIUS CIRCLE
+    // =========================
     circleRef.current = L.circle([user.lat, user.lng], {
       radius: radius * 1609,
       color: "#ff6b6b",
       fillColor: "#ff6b6b",
-      fillOpacity: 0.1,
+      fillOpacity: 0.08,
     }).addTo(mapRef.current);
 
     // =========================
-    // SMART DETECTION ENGINE
+    // 🧠 AI ENGINE
     // =========================
     let count = 0;
+    let urgent = 0;
+    let heatPoints = [];
 
-    const validPets = Array.isArray(pets) ? pets : [];
-
-    validPets.forEach((p) => {
+    pets.forEach((p) => {
       if (!p.latitude || !p.longitude) return;
 
       const d = getDistanceMiles(
@@ -113,6 +119,7 @@ export default function Map({ pets = [] }) {
       if (d > radius) return;
 
       count++;
+      if (d < 1) urgent++;
 
       const isUrgent = d < 1;
 
@@ -124,9 +131,8 @@ export default function Map({ pets = [] }) {
             padding:6px 10px;
             border-radius:20px;
             font-size:12px;
-            font-weight:600;
+            font-weight:bold;
             white-space:nowrap;
-            box-shadow:0 2px 6px rgba(0,0,0,0.2);
           ">
             ${p.name}
           </div>
@@ -134,28 +140,62 @@ export default function Map({ pets = [] }) {
         className: "",
       });
 
-      const marker = L.marker([p.latitude, p.longitude], { icon })
-        .addTo(mapRef.current)
-        .bindPopup(`
-          <b>${p.name}</b><br/>
-          ${d.toFixed(1)} miles away
-        `);
+      const marker = L.marker([p.latitude, p.longitude], { icon });
 
-      markersRef.current.push(marker);
+      marker.bindPopup(`
+        <b>${p.name}</b><br/>
+        ${d.toFixed(1)} miles away
+      `);
+
+      cluster.addLayer(marker);
+
+      heatPoints.push([p.latitude, p.longitude, 1]);
     });
 
+    // =========================
+    // 🧭 ZONE ENGINE
+    // =========================
+    let zoneLevel = "CLEAR";
+
+    if (count >= 5 || urgent >= 2) zoneLevel = "CRITICAL";
+    else if (count >= 3) zoneLevel = "ACTIVE";
+    else if (count >= 1) zoneLevel = "WATCH";
+
+    setZone(zoneLevel);
     setNearbyCount(count);
+
+    // =========================
+    // 🔥 HEATMAP LAYER
+    // =========================
+    heatRef.current = L.heatLayer(heatPoints, {
+      radius: 30,
+      blur: 20,
+      maxZoom: 15,
+    }).addTo(mapRef.current);
   }, [pets, user, radius]);
 
   // =========================
-  // 3. UI
+  // 🎨 UI
   // =========================
   return (
     <div style={{ textAlign: "center" }}>
+      <div style={{
+        marginTop: 10,
+        padding: 10,
+        borderRadius: 10,
+        background:
+          zone === "CLEAR" ? "#e8f5e9" :
+          zone === "WATCH" ? "#fff8e1" :
+          zone === "ACTIVE" ? "#ffebee" :
+          "#b71c1c",
+        color: zone === "CRITICAL" ? "white" : "black",
+        fontWeight: "bold"
+      }}>
+        🧭 Zone Status: {zone}
+      </div>
+
       <h3 style={{ marginTop: 10 }}>
-        {nearbyCount === 0
-          ? "😌 No pets nearby"
-          : `🐾 ${nearbyCount} pets near you`}
+        🐾 {nearbyCount} pets nearby
       </h3>
 
       <input
@@ -173,7 +213,7 @@ export default function Map({ pets = [] }) {
       <div
         id="map"
         style={{
-          height: "420px",
+          height: "450px",
           width: "90%",
           margin: "auto",
           borderRadius: 12,
