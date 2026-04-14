@@ -1,149 +1,137 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import L from "leaflet";
 import { getDistanceMiles } from "@/lib/geo";
 
-export default function Map({ pets, setPets }) {
+export default function Map({ pets = [] }) {
+  const mapRef = useRef(null);
   const leafletMap = useRef(null);
-  const markerLayer = useRef([]);
-  const radiusCircle = useRef(null);
+
+  const markersRef = useRef([]);
+  const circleRef = useRef(null);
 
   const [user, setUser] = useState(null);
   const [radius, setRadius] = useState(10);
   const [nearbyCount, setNearbyCount] = useState(0);
 
-  // 🟢 INIT MAP
+  // =========================
+  // 1. INIT MAP (RUN ONCE)
+  // =========================
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (leafletMap.current) return;
 
-    import("leaflet").then((L) => {
-      leafletMap.current = L.map("map").setView([27.95, -82.46], 10);
+    leafletMap.current = L.map("map").setView([27.95, -82.46], 10);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "© OpenStreetMap",
-      }).addTo(leafletMap.current);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap",
+    }).addTo(leafletMap.current);
 
-      navigator.geolocation.getCurrentPosition((pos) => {
-        const u = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        };
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const location = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+      };
 
-        setUser(u);
+      setUser(location);
 
-        leafletMap.current.setView([u.lat, u.lng], 12);
+      leafletMap.current.setView([location.lat, location.lng], 12);
 
-        L.marker([u.lat, u.lng])
-          .addTo(leafletMap.current)
-          .bindPopup("📍 You are here");
-      });
+      L.marker([location.lat, location.lng])
+        .addTo(leafletMap.current)
+        .bindPopup("📍 You are here");
     });
   }, []);
 
-  // 🟢 LOAD PETS + REALTIME
-  useEffect(() => {
-    const loadPets = async () => {
-      const { data } = await supabase
-        .from("lost_pets")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      setPets(data || []);
-    };
-
-    loadPets();
-
-    const channel = supabase
-      .channel("pets")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "lost_pets" },
-        (payload) => {
-          setPets((prev) => [payload.new, ...prev]);
-        }
-      )
-      .subscribe();
-
-    return () => supabase.removeChannel(channel);
-  }, []);
-
-  // 🟢 SMART NEARBY ALERT ENGINE
+  // =========================
+  // 2. RENDER PETS (OPTIMIZED)
+  // =========================
   useEffect(() => {
     if (!leafletMap.current || !user) return;
 
-    import("leaflet").then((L) => {
-      // clear old markers
-      markerLayer.current.forEach((m) =>
-        leafletMap.current.removeLayer(m)
+    const L = require("leaflet"); // safe runtime access
+
+    // 🔥 CLEAR OLD MARKERS
+    markersRef.current.forEach((m) => {
+      leafletMap.current.removeLayer(m);
+    });
+    markersRef.current = [];
+
+    // 🔥 CLEAR OLD CIRCLE
+    if (circleRef.current) {
+      leafletMap.current.removeLayer(circleRef.current);
+    }
+
+    // 🔥 DRAW RADIUS CIRCLE
+    circleRef.current = L.circle([user.lat, user.lng], {
+      radius: radius * 1609,
+      color: "#ff6b6b",
+      fillColor: "#ff6b6b",
+      fillOpacity: 0.1,
+    }).addTo(leafletMap.current);
+
+    // =========================
+    // 3. SMART FILTER ENGINE
+    // =========================
+    let count = 0;
+
+    const validPets = pets.filter(
+      (p) => p.latitude && p.longitude
+    );
+
+    validPets.forEach((p) => {
+      const distance = getDistanceMiles(
+        user.lat,
+        user.lng,
+        p.latitude,
+        p.longitude
       );
-      markerLayer.current = [];
 
-      // remove old circle
-      if (radiusCircle.current) {
-        leafletMap.current.removeLayer(radiusCircle.current);
-      }
+      if (distance > radius) return;
 
-      // 🔥 radius circle visualization
-      radiusCircle.current = L.circle([user.lat, user.lng], {
-        radius: radius * 1609,
-        color: "#ff6b6b",
-        fillColor: "#ff6b6b",
-        fillOpacity: 0.1,
-      }).addTo(leafletMap.current);
+      count++;
 
-      let count = 0;
+      const isUrgent = distance < 2;
 
-      pets.forEach((p) => {
-        if (!p.latitude || !p.longitude) return;
-
-        const d = getDistanceMiles(
-          user.lat,
-          user.lng,
-          p.latitude,
-          p.longitude
-        );
-
-        if (d <= radius) {
-          count++;
-
-          // 🔥 SMART MARKER
-          const icon = L.divIcon({
-            html: `<div style="
-              background:${d < 2 ? "#ff3b3b" : "#ff914d"};
-              color:white;
-              padding:6px 10px;
-              border-radius:20px;
-              font-size:12px;
-              font-weight:bold;
-              white-space:nowrap;
-            ">
-              ${p.name}
-            </div>`,
-            className: "",
-          });
-
-          const marker = L.marker([p.latitude, p.longitude], {
-            icon,
-          })
-            .addTo(leafletMap.current)
-            .bindPopup(
-              `<b>${p.name}</b><br/>${d.toFixed(1)} miles away`
-            );
-
-          markerLayer.current.push(marker);
-        }
+      const icon = L.divIcon({
+        html: `
+          <div style="
+            background:${isUrgent ? "#ff3b3b" : "#ff914d"};
+            color:white;
+            padding:6px 10px;
+            border-radius:20px;
+            font-size:12px;
+            font-weight:600;
+            white-space:nowrap;
+            box-shadow:0 2px 6px rgba(0,0,0,0.2);
+          ">
+            ${p.name}
+          </div>
+        `,
+        className: "",
       });
 
-      setNearbyCount(count);
+      const marker = L.marker([p.latitude, p.longitude], { icon })
+        .addTo(leafletMap.current)
+        .bindPopup(`
+          <b>${p.name}</b><br/>
+          ${distance.toFixed(1)} miles away
+        `);
+
+      markersRef.current.push(marker);
     });
+
+    setNearbyCount(count);
   }, [pets, user, radius]);
 
+  // =========================
+  // 4. UI
+  // =========================
   return (
     <div style={{ textAlign: "center" }}>
       
-      {/* 🔥 LIVE ALERT COUNTER */}
+      {/* LIVE COUNTER */}
       <h3 style={{ marginTop: 10 }}>
         🐾 {nearbyCount} pets near you
       </h3>
@@ -155,20 +143,21 @@ export default function Map({ pets, setPets }) {
         onChange={(e) => setRadius(Number(e.target.value))}
         style={{
           margin: "10px",
-          padding: "8px",
+          padding: 8,
           borderRadius: 8,
           border: "1px solid #ddd",
         }}
       />
 
-      {/* MAP */}
+      {/* MAP CONTAINER */}
       <div
         id="map"
         style={{
-          height: "400px",
+          height: "420px",
           width: "90%",
           margin: "auto",
           borderRadius: 12,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
         }}
       />
     </div>
