@@ -9,27 +9,23 @@ export default function Home() {
   const [pets, setPets] = useState([]);
 
   return (
-    <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+    <div style={{ fontFamily: "Arial" }}>
       
       {/* HEADER */}
-      <h1 style={{ textAlign: "center", marginTop: 20 }}>
+      <h2 style={{ textAlign: "center", margin: 10 }}>
         🐾 PawSignal
-      </h1>
+      </h2>
 
-      {/* UPLOAD SECTION */}
-      <section style={{ marginBottom: 20 }}>
+      {/* MAP FIRST (PRIMARY EXPERIENCE) */}
+      <Map pets={pets} setPets={setPets} />
+
+      {/* QUICK ACTION (VISIBLE, NOT DOMINANT) */}
+      <div style={{ padding: "10px 20px" }}>
         <UploadForm />
-      </section>
+      </div>
 
-      {/* MAP SECTION */}
-      <section style={{ marginBottom: 20 }}>
-        <Map pets={pets} setPets={setPets} />
-      </section>
-
-      {/* FEED SECTION */}
-      <section>
-        <PetFeed pets={pets} />
-      </section>
+      {/* FEED (SECONDARY) */}
+      <PetFeed pets={pets} />
 
     </div>
   );
