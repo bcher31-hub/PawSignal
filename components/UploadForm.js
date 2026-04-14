@@ -125,21 +125,22 @@ export default function UploadForm() {
       />
 
       <button
-        type="submit"
-        disabled={loading}
-        style={{
-          width: "100%",
-          padding: 12,
-          background: loading ? "#ccc" : "#ff6b6b",
-          color: "white",
-          border: "none",
-          borderRadius: 8,
-          cursor: "pointer",
-          fontWeight: "bold",
-        }}
-      >
-        {loading ? "Posting..." : "Report Pet"}
-      </button>
+  type="submit"
+  disabled={loading}
+  style={{
+    width: "100%",
+    padding: 12,
+    background: loading ? "#ccc" : "#ff6b6b",
+    color: "white",
+    border: "none",
+    borderRadius: 8,
+    cursor: loading ? "not-allowed" : "pointer",
+    fontWeight: "bold",
+    transition: "0.2s ease",
+  }}
+>
+  {loading ? "Posting..." : "Report Pet 🐾"}
+</button>
 
       {msg && (
         <p style={{ marginTop: 10, fontSize: 14 }}>
