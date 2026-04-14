@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import L from "leaflet";
 import { getDistanceMiles } from "@/lib/geo";
 
 export default function Map({ pets = [] }) {
-  const leafletMap = useRef(null);
+  const mapRef = useRef(null);
+  const leafletRef = useRef(null);
+
   const markersRef = useRef([]);
   const circleRef = useRef(null);
 
@@ -14,71 +15,92 @@ export default function Map({ pets = [] }) {
   const [nearbyCount, setNearbyCount] = useState(0);
 
   // =========================
-  // 1. INIT MAP (SAFE)
+  // 1. INIT MAP (SSR SAFE + LAZY LOAD)
   // =========================
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (leafletMap.current) return;
+    if (leafletRef.current) return;
 
-    leafletMap.current = L.map("map").setView([27.95, -82.46], 10);
+    let isMounted = true;
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap",
-    }).addTo(leafletMap.current);
+    import("leaflet").then((L) => {
+      if (!isMounted) return;
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const location = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        };
+      leafletRef.current = L;
 
-        setUser(location);
+      const map = L.map("map").setView([27.95, -82.46], 10);
+      mapRef.current = map;
 
-        leafletMap.current.setView([location.lat, location.lng], 12);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap",
+      }).addTo(map);
 
-        L.marker([location.lat, location.lng])
-          .addTo(leafletMap.current)
-          .bindPopup("📍 You are here");
-      },
-      () => {
-        // fallback if denied
+      // safe geolocation
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const location = {
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+            };
+
+            setUser(location);
+
+            map.setView([location.lat, location.lng], 12);
+
+            L.marker([location.lat, location.lng])
+              .addTo(map)
+              .bindPopup("📍 You are here");
+          },
+          () => {
+            setUser({ lat: 27.95, lng: -82.46 });
+          }
+        );
+      } else {
         setUser({ lat: 27.95, lng: -82.46 });
       }
-    );
+    });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // =========================
-  // 2. RENDER ENGINE (CORE LOGIC)
+  // 2. RENDER ENGINE (SAFE + CONTROLLED)
   // =========================
   useEffect(() => {
-    if (!leafletMap.current || !user) return;
+    if (!mapRef.current || !leafletRef.current || !user) return;
+
+    const L = leafletRef.current;
 
     // clear markers
-    markersRef.current.forEach((m) =>
-      leafletMap.current.removeLayer(m)
-    );
+    markersRef.current.forEach((m) => {
+      mapRef.current.removeLayer(m);
+    });
     markersRef.current = [];
 
     // clear circle
     if (circleRef.current) {
-      leafletMap.current.removeLayer(circleRef.current);
+      mapRef.current.removeLayer(circleRef.current);
     }
 
-    // radius circle
+    // draw radius
     circleRef.current = L.circle([user.lat, user.lng], {
       radius: radius * 1609,
       color: "#ff6b6b",
       fillColor: "#ff6b6b",
       fillOpacity: 0.1,
-    }).addTo(leafletMap.current);
+    }).addTo(mapRef.current);
 
     // =========================
     // SMART DETECTION ENGINE
     // =========================
     let count = 0;
 
-    pets.forEach((p) => {
+    const validPets = Array.isArray(pets) ? pets : [];
+
+    validPets.forEach((p) => {
       if (!p.latitude || !p.longitude) return;
 
       const d = getDistanceMiles(
@@ -102,9 +124,9 @@ export default function Map({ pets = [] }) {
             padding:6px 10px;
             border-radius:20px;
             font-size:12px;
-            font-weight:bold;
-            box-shadow:0 2px 6px rgba(0,0,0,0.2);
+            font-weight:600;
             white-space:nowrap;
+            box-shadow:0 2px 6px rgba(0,0,0,0.2);
           ">
             ${p.name}
           </div>
@@ -113,7 +135,7 @@ export default function Map({ pets = [] }) {
       });
 
       const marker = L.marker([p.latitude, p.longitude], { icon })
-        .addTo(leafletMap.current)
+        .addTo(mapRef.current)
         .bindPopup(`
           <b>${p.name}</b><br/>
           ${d.toFixed(1)} miles away
