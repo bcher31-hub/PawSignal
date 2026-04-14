@@ -6,6 +6,22 @@ import { supabase } from "@/lib/supabaseClient";
 export default function UploadForm() {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [coords, setCoords] = useState(null);
+
+  // 🔥 GET USER LOCATION
+  async function getLocation() {
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          resolve({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          });
+        },
+        (err) => reject(err)
+      );
+    });
+  }
 
   async function submit(e) {
     e.preventDefault();
@@ -13,6 +29,9 @@ export default function UploadForm() {
     setMsg("");
 
     try {
+      const location = await getLocation();
+      setCoords(location);
+
       const form = new FormData(e.target);
       const file = form.get("image");
 
@@ -29,7 +48,6 @@ export default function UploadForm() {
           .upload(fileName, file);
 
         if (uploadError) {
-          console.error("Upload error:", uploadError.message);
           setMsg("❌ Image upload failed");
           setLoading(false);
           return;
@@ -43,7 +61,7 @@ export default function UploadForm() {
       }
 
       // -------------------------
-      // 2. Insert into DB (RETURN DATA)
+      // 2. INSERT WITH REAL LOCATION
       // -------------------------
       const { data, error } = await supabase
         .from("lost_pets")
@@ -52,109 +70,83 @@ export default function UploadForm() {
             name: form.get("name"),
             type: form.get("type"),
             description: form.get("description"),
-            latitude: 27.95,
-            longitude: -82.46,
+            latitude: location.lat,
+            longitude: location.lng,
             image_url: imageUrl,
           },
         ])
-        .select(); // 🔥 CRITICAL
+        .select();
 
       if (error) {
-        console.error("Insert error:", error.message);
         setMsg("❌ Failed to save pet");
         setLoading(false);
         return;
       }
 
-      // -------------------------
-      // 3. INSTANT UI UPDATE (NO REFRESH)
-      // -------------------------
-      if (data && data[0]) {
+      // 🔥 REAL-TIME PUSH EVENT
+      if (data?.[0]) {
         window.dispatchEvent(
           new CustomEvent("new-pet", { detail: data[0] })
         );
       }
 
-      setMsg("✅ Pet reported!");
+      setMsg("🐾 Pet reported from your location!");
       e.target.reset();
 
     } catch (err) {
-      console.error("Unexpected error:", err);
-      setMsg("❌ Something went wrong");
+      console.error(err);
+      setMsg("❌ Location permission denied or error");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <form
-      onSubmit={submit}
-      style={{
-        padding: 15,
-        borderRadius: 12,
-        background: "#ffffff",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-      }}
-    >
-      <h3 style={{ marginBottom: 12 }}>🐾 Report Lost Pet</h3>
+    <form onSubmit={submit} style={styles.card}>
+      <h3>🐾 Report Lost Pet</h3>
 
-      <input
-        name="name"
-        placeholder="Pet name"
-        required
-        style={inputStyle}
-      />
+      <input name="name" placeholder="Pet name" required style={styles.input} />
+      <input name="type" placeholder="Dog / Cat" required style={styles.input} />
+      <textarea name="description" placeholder="Description" style={styles.input} />
 
-      <input
-        name="type"
-        placeholder="Type (Dog, Cat...)"
-        required
-        style={inputStyle}
-      />
+      <input type="file" name="image" style={{ marginBottom: 10 }} />
 
-      <textarea
-        name="description"
-        placeholder="Description"
-        style={{ ...inputStyle, minHeight: 60 }}
-      />
+      {/* 🔥 LOCATION STATUS */}
+      <p style={{ fontSize: 12, color: "#666" }}>
+        📍 Location will be captured automatically
+      </p>
 
-      <input
-        type="file"
-        name="image"
-        style={{ marginBottom: 12 }}
-      />
+      <button type="submit" disabled={loading} style={styles.button}>
+        {loading ? "Posting..." : "Report Pet 🐾"}
+      </button>
 
-      <button
-  type="submit"
-  disabled={loading}
-  style={{
-    width: "100%",
-    padding: 12,
-    background: loading ? "#ccc" : "#ff6b6b",
-    color: "white",
-    border: "none",
-    borderRadius: 8,
-    cursor: loading ? "not-allowed" : "pointer",
-    fontWeight: "bold",
-    transition: "0.2s ease",
-  }}
->
-  {loading ? "Posting..." : "Report Pet 🐾"}
-</button>
-
-      {msg && (
-        <p style={{ marginTop: 10, fontSize: 14 }}>
-          {msg}
-        </p>
-      )}
+      {msg && <p style={{ marginTop: 10 }}>{msg}</p>}
     </form>
   );
 }
 
-const inputStyle = {
-  width: "100%",
-  marginBottom: 10,
-  padding: 10,
-  borderRadius: 8,
-  border: "1px solid #ddd",
+const styles = {
+  card: {
+    padding: 15,
+    borderRadius: 12,
+    background: "#fff",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+  },
+  input: {
+    width: "100%",
+    marginBottom: 10,
+    padding: 10,
+    borderRadius: 8,
+    border: "1px solid #ddd",
+  },
+  button: {
+    width: "100%",
+    padding: 12,
+    background: "#ff6b6b",
+    color: "white",
+    border: "none",
+    borderRadius: 8,
+    cursor: "pointer",
+    fontWeight: "bold",
+  },
 };
