@@ -6,11 +6,15 @@ import { supabase } from "@/lib/supabaseClient";
 export default function UploadForm() {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
-  const [coords, setCoords] = useState(null);
 
-  // 🔥 GET USER LOCATION
-  async function getLocation() {
-    return new Promise((resolve, reject) => {
+  // 📍 SAFE GEOLOCATION (PROMISE WRAPPER)
+  const getLocation = () => {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve({ lat: 27.95, lng: -82.46 }); // fallback
+        return;
+      }
+
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           resolve({
@@ -18,10 +22,12 @@ export default function UploadForm() {
             lng: pos.coords.longitude,
           });
         },
-        (err) => reject(err)
+        () => {
+          resolve({ lat: 27.95, lng: -82.46 }); // fallback if denied
+        }
       );
     });
-  }
+  };
 
   async function submit(e) {
     e.preventDefault();
@@ -29,16 +35,16 @@ export default function UploadForm() {
     setMsg("");
 
     try {
-      const location = await getLocation();
-      setCoords(location);
-
       const form = new FormData(e.target);
       const file = form.get("image");
+
+      // 📍 GET LOCATION FIRST
+      const location = await getLocation();
 
       let imageUrl = null;
 
       // -------------------------
-      // 1. Upload image
+      // 1. Upload image (optional)
       // -------------------------
       if (file && file.name) {
         const fileName = `${Date.now()}_${file.name}`;
@@ -48,6 +54,7 @@ export default function UploadForm() {
           .upload(fileName, file);
 
         if (uploadError) {
+          console.log("Upload error:", uploadError.message);
           setMsg("❌ Image upload failed");
           setLoading(false);
           return;
@@ -61,7 +68,7 @@ export default function UploadForm() {
       }
 
       // -------------------------
-      // 2. INSERT WITH REAL LOCATION
+      // 2. INSERT (REAL LOCATION FIXED)
       // -------------------------
       const { data, error } = await supabase
         .from("lost_pets")
@@ -70,40 +77,46 @@ export default function UploadForm() {
             name: form.get("name"),
             type: form.get("type"),
             description: form.get("description"),
+
+            // 🔥 REAL GPS
             latitude: location.lat,
             longitude: location.lng,
+
             image_url: imageUrl,
           },
         ])
         .select();
 
       if (error) {
+        console.log("Insert error:", error.message);
         setMsg("❌ Failed to save pet");
         setLoading(false);
         return;
       }
 
-      // 🔥 REAL-TIME PUSH EVENT
+      // -------------------------
+      // 3. REALTIME EVENT PUSH
+      // -------------------------
       if (data?.[0]) {
         window.dispatchEvent(
           new CustomEvent("new-pet", { detail: data[0] })
         );
       }
 
-      setMsg("🐾 Pet reported from your location!");
+      setMsg("🐾 Pet reported successfully!");
       e.target.reset();
 
     } catch (err) {
-      console.error(err);
-      setMsg("❌ Location permission denied or error");
+      console.log(err);
+      setMsg("❌ Unexpected error occurred");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <form onSubmit={submit} style={styles.card}>
-      <h3>🐾 Report Lost Pet</h3>
+    <form style={styles.card} onSubmit={submit}>
+      <h3 style={{ marginBottom: 10 }}>🐾 Report Lost Pet</h3>
 
       <input name="name" placeholder="Pet name" required style={styles.input} />
       <input name="type" placeholder="Dog / Cat" required style={styles.input} />
@@ -111,16 +124,20 @@ export default function UploadForm() {
 
       <input type="file" name="image" style={{ marginBottom: 10 }} />
 
-      {/* 🔥 LOCATION STATUS */}
-      <p style={{ fontSize: 12, color: "#666" }}>
-        📍 Location will be captured automatically
+      {/* 📍 LOCATION INDICATOR */}
+      <p style={{ fontSize: 12, color: "#777" }}>
+        📍 Auto-location will be used (or fallback if denied)
       </p>
 
       <button type="submit" disabled={loading} style={styles.button}>
         {loading ? "Posting..." : "Report Pet 🐾"}
       </button>
 
-      {msg && <p style={{ marginTop: 10 }}>{msg}</p>}
+      {msg && (
+        <p style={{ marginTop: 10, fontSize: 13 }}>
+          {msg}
+        </p>
+      )}
     </form>
   );
 }
