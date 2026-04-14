@@ -5,9 +5,7 @@ import L from "leaflet";
 import { getDistanceMiles } from "@/lib/geo";
 
 export default function Map({ pets = [] }) {
-  const mapRef = useRef(null);
   const leafletMap = useRef(null);
-
   const markersRef = useRef([]);
   const circleRef = useRef(null);
 
@@ -16,7 +14,7 @@ export default function Map({ pets = [] }) {
   const [nearbyCount, setNearbyCount] = useState(0);
 
   // =========================
-  // 1. INIT MAP (RUN ONCE)
+  // 1. INIT MAP (SAFE)
   // =========================
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -28,42 +26,46 @@ export default function Map({ pets = [] }) {
       attribution: "© OpenStreetMap",
     }).addTo(leafletMap.current);
 
-    navigator.geolocation.getCurrentPosition((pos) => {
-      const location = {
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude,
-      };
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const location = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        };
 
-      setUser(location);
+        setUser(location);
 
-      leafletMap.current.setView([location.lat, location.lng], 12);
+        leafletMap.current.setView([location.lat, location.lng], 12);
 
-      L.marker([location.lat, location.lng])
-        .addTo(leafletMap.current)
-        .bindPopup("📍 You are here");
-    });
+        L.marker([location.lat, location.lng])
+          .addTo(leafletMap.current)
+          .bindPopup("📍 You are here");
+      },
+      () => {
+        // fallback if denied
+        setUser({ lat: 27.95, lng: -82.46 });
+      }
+    );
   }, []);
 
   // =========================
-  // 2. RENDER PETS (OPTIMIZED)
+  // 2. RENDER ENGINE (CORE LOGIC)
   // =========================
   useEffect(() => {
     if (!leafletMap.current || !user) return;
 
-    const L = require("leaflet"); // safe runtime access
-
-    // 🔥 CLEAR OLD MARKERS
-    markersRef.current.forEach((m) => {
-      leafletMap.current.removeLayer(m);
-    });
+    // clear markers
+    markersRef.current.forEach((m) =>
+      leafletMap.current.removeLayer(m)
+    );
     markersRef.current = [];
 
-    // 🔥 CLEAR OLD CIRCLE
+    // clear circle
     if (circleRef.current) {
       leafletMap.current.removeLayer(circleRef.current);
     }
 
-    // 🔥 DRAW RADIUS CIRCLE
+    // radius circle
     circleRef.current = L.circle([user.lat, user.lng], {
       radius: radius * 1609,
       color: "#ff6b6b",
@@ -72,39 +74,37 @@ export default function Map({ pets = [] }) {
     }).addTo(leafletMap.current);
 
     // =========================
-    // 3. SMART FILTER ENGINE
+    // SMART DETECTION ENGINE
     // =========================
     let count = 0;
 
-    const validPets = pets.filter(
-      (p) => p.latitude && p.longitude
-    );
+    pets.forEach((p) => {
+      if (!p.latitude || !p.longitude) return;
 
-    validPets.forEach((p) => {
-      const distance = getDistanceMiles(
+      const d = getDistanceMiles(
         user.lat,
         user.lng,
         p.latitude,
         p.longitude
       );
 
-      if (distance > radius) return;
+      if (d > radius) return;
 
       count++;
 
-      const isUrgent = distance < 2;
+      const isUrgent = d < 1;
 
       const icon = L.divIcon({
         html: `
           <div style="
-            background:${isUrgent ? "#ff3b3b" : "#ff914d"};
+            background:${isUrgent ? "#ff2d2d" : "#ff914d"};
             color:white;
             padding:6px 10px;
             border-radius:20px;
             font-size:12px;
-            font-weight:600;
-            white-space:nowrap;
+            font-weight:bold;
             box-shadow:0 2px 6px rgba(0,0,0,0.2);
+            white-space:nowrap;
           ">
             ${p.name}
           </div>
@@ -116,7 +116,7 @@ export default function Map({ pets = [] }) {
         .addTo(leafletMap.current)
         .bindPopup(`
           <b>${p.name}</b><br/>
-          ${distance.toFixed(1)} miles away
+          ${d.toFixed(1)} miles away
         `);
 
       markersRef.current.push(marker);
@@ -126,17 +126,16 @@ export default function Map({ pets = [] }) {
   }, [pets, user, radius]);
 
   // =========================
-  // 4. UI
+  // 3. UI
   // =========================
   return (
     <div style={{ textAlign: "center" }}>
-      
-      {/* LIVE COUNTER */}
       <h3 style={{ marginTop: 10 }}>
-        🐾 {nearbyCount} pets near you
+        {nearbyCount === 0
+          ? "😌 No pets nearby"
+          : `🐾 ${nearbyCount} pets near you`}
       </h3>
 
-      {/* RADIUS CONTROL */}
       <input
         type="number"
         value={radius}
@@ -149,7 +148,6 @@ export default function Map({ pets = [] }) {
         }}
       />
 
-      {/* MAP CONTAINER */}
       <div
         id="map"
         style={{
@@ -157,7 +155,6 @@ export default function Map({ pets = [] }) {
           width: "90%",
           margin: "auto",
           borderRadius: 12,
-          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
         }}
       />
     </div>
