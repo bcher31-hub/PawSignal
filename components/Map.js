@@ -5,13 +5,15 @@ import { supabase } from "@/lib/supabaseClient";
 import { getDistanceMiles } from "@/lib/geo";
 
 export default function Map({ pets, setPets }) {
-  const mapRef = useRef(null);
   const leafletMap = useRef(null);
   const markerLayer = useRef([]);
+  const radiusCircle = useRef(null);
+
   const [user, setUser] = useState(null);
   const [radius, setRadius] = useState(10);
+  const [nearbyCount, setNearbyCount] = useState(0);
 
-  // 🟢 INIT MAP (CLIENT ONLY SAFE)
+  // 🟢 INIT MAP (CLIENT SAFE)
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (leafletMap.current) return;
@@ -40,7 +42,7 @@ export default function Map({ pets, setPets }) {
     });
   }, []);
 
-  // 🟢 LOAD PETS + REALTIME UPDATES
+  // 🟢 LOAD PETS + REALTIME
   useEffect(() => {
     const loadPets = async () => {
       const { data } = await supabase.from("lost_pets").select("*");
@@ -63,18 +65,31 @@ export default function Map({ pets, setPets }) {
     return () => supabase.removeChannel(channel);
   }, []);
 
-  // 🟢 ALERTS LISTENER (FIXED - MERGED PROPERLY)
- 
-
-  // 🟢 UPDATE MARKERS
+  // 🟢 UPDATE MAP (Markers + Radius + Counter)
   useEffect(() => {
     if (!leafletMap.current || !user) return;
 
     import("leaflet").then((L) => {
+      // Clear markers
       markerLayer.current.forEach((m) =>
         leafletMap.current.removeLayer(m)
       );
       markerLayer.current = [];
+
+      // Remove old circle
+      if (radiusCircle.current) {
+        leafletMap.current.removeLayer(radiusCircle.current);
+      }
+
+      // 🔥 ADD RADIUS CIRCLE
+      radiusCircle.current = L.circle([user.lat, user.lng], {
+        radius: radius * 1609, // miles → meters
+        color: "#ff6b6b",
+        fillColor: "#ff6b6b",
+        fillOpacity: 0.1,
+      }).addTo(leafletMap.current);
+
+      let count = 0;
 
       pets.forEach((p) => {
         if (!p.latitude || !p.longitude) return;
@@ -87,7 +102,27 @@ export default function Map({ pets, setPets }) {
         );
 
         if (d <= radius) {
-          const marker = L.marker([p.latitude, p.longitude])
+          count++;
+
+          // 🔥 SMART MARKER
+          const icon = L.divIcon({
+            html: `<div style="
+              background:${d < 2 ? "#ff3b3b" : "#ff914d"};
+              color:white;
+              padding:6px 10px;
+              border-radius:20px;
+              font-size:12px;
+              font-weight:bold;
+            ">
+              ${p.name}
+            </div>`,
+            className: "",
+          });
+
+          const marker = L.marker(
+            [p.latitude, p.longitude],
+            { icon }
+          )
             .addTo(leafletMap.current)
             .bindPopup(
               `<b>${p.name}</b><br/>${d.toFixed(1)} miles away`
@@ -96,21 +131,41 @@ export default function Map({ pets, setPets }) {
           markerLayer.current.push(marker);
         }
       });
+
+      setNearbyCount(count);
     });
   }, [pets, user, radius]);
 
   return (
     <div style={{ textAlign: "center" }}>
+      
+      {/* 🔥 LIVE COUNTER */}
+      <h3 style={{ marginTop: 10 }}>
+        🐾 {nearbyCount} pets near you
+      </h3>
+
+      {/* RADIUS INPUT */}
       <input
         type="number"
         value={radius}
         onChange={(e) => setRadius(Number(e.target.value))}
-        style={{ margin: "10px", padding: "8px" }}
+        style={{
+          margin: "10px",
+          padding: "8px",
+          borderRadius: 8,
+          border: "1px solid #ddd"
+        }}
       />
 
+      {/* MAP */}
       <div
         id="map"
-        style={{ height: "400px", width: "90%", margin: "auto" }}
+        style={{
+          height: "400px",
+          width: "90%",
+          margin: "auto",
+          borderRadius: 12,
+        }}
       />
     </div>
   );
