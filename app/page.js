@@ -10,7 +10,34 @@ export default function Home() {
   const [pets, setPets] = useState([]);
   const [showForm, setShowForm] = useState(false);
 
-  // 🔥 LOAD INITIAL DATA
+  // =========================
+  // 🔥 STEP 1 — SERVICE WORKER
+  // =========================
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch((err) => {
+        console.log("SW registration failed:", err);
+      });
+    }
+  }, []);
+
+  // =========================
+  // 🔐 STEP 2 — NOTIFICATION PERMISSION
+  // =========================
+  useEffect(() => {
+    const requestPermission = async () => {
+      if (!("Notification" in window)) return;
+
+      const permission = await Notification.requestPermission();
+      console.log("Notification permission:", permission);
+    };
+
+    requestPermission();
+  }, []);
+
+  // =========================
+  // 🔥 STEP 3 — SINGLE SOURCE OF TRUTH (FIXED)
+  // =========================
   useEffect(() => {
     const loadPets = async () => {
       const { data, error } = await supabase
@@ -22,21 +49,23 @@ export default function Home() {
     };
 
     loadPets();
-  }, []);
 
-  // 🔥 REAL-TIME SUBSCRIPTION (ONLY SOURCE OF TRUTH)
-  useEffect(() => {
     const channel = supabase
       .channel("lost_pets_realtime")
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*", // INSERT + future-proof
           schema: "public",
           table: "lost_pets",
         },
         (payload) => {
-          setPets((prev) => [payload.new, ...prev]);
+          setPets((prev) => {
+            const exists = prev.some((p) => p.id === payload.new.id);
+            if (exists) return prev;
+
+            return [payload.new, ...prev];
+          });
         }
       )
       .subscribe();
@@ -51,6 +80,10 @@ export default function Home() {
       <h2 style={{ textAlign: "center", margin: 10 }}>
         🐾 PawSignal
       </h2>
+
+      <p style={{ textAlign: "center", color: "#666" }}>
+        Real-time lost pet recovery network
+      </p>
 
       {/* MAP */}
       <Map pets={pets} />
@@ -70,6 +103,7 @@ export default function Home() {
           height: 60,
           fontSize: 28,
           cursor: "pointer",
+          boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
         }}
       >
         +
@@ -82,13 +116,20 @@ export default function Home() {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.5)",
+            background: "rgba(0,0,0,0.6)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
+            zIndex: 1000,
           }}
         >
-          <div onClick={(e) => e.stopPropagation()}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "90%",
+              maxWidth: 420,
+            }}
+          >
             <UploadForm />
           </div>
         </div>
