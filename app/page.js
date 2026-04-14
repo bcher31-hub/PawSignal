@@ -1,13 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Map from "@/components/Map";
 import PetFeed from "@/components/PetFeed";
 import UploadForm from "@/components/UploadForm";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function Home() {
   const [pets, setPets] = useState([]);
   const [showForm, setShowForm] = useState(false);
+
+  // 🔥 LOAD EXISTING PETS (ON PAGE LOAD)
+  useEffect(() => {
+    const loadPets = async () => {
+      const { data, error } = await supabase
+        .from("lost_pets")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Load error:", error.message);
+        return;
+      }
+
+      setPets(data || []);
+    };
+
+    loadPets();
+  }, []);
+
+  // 🔥 REAL-TIME LISTENER (FRONTEND EVENT SYSTEM)
+  useEffect(() => {
+    const handler = (e) => {
+      setPets((prev) => [e.detail, ...prev]);
+    };
+
+    window.addEventListener("new-pet", handler);
+
+    return () => {
+      window.removeEventListener("new-pet", handler);
+    };
+  }, []);
 
   return (
     <div style={{ position: "relative", fontFamily: "Arial" }}>
@@ -16,6 +49,26 @@ export default function Home() {
       <h2 style={{ textAlign: "center", margin: 10 }}>
         🐾 PawSignal
       </h2>
+
+      <p style={{
+        textAlign: "center",
+        color: "#666",
+        marginBottom: 10
+      }}>
+        Helping lost pets find their way home ❤️
+      </p>
+
+      {/* ALERT BANNER */}
+      <div style={{
+        background: "#fff5f5",
+        padding: 10,
+        borderRadius: 10,
+        textAlign: "center",
+        margin: "10px",
+        color: "#ff4d4d"
+      }}>
+        🚨 Stay alert — pets reported near your area
+      </div>
 
       {/* MAP */}
       <Map pets={pets} setPets={setPets} />
