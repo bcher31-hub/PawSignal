@@ -96,41 +96,51 @@ export default function Home() {
 
       {/* MODAL */}
       {showForm && (
-        <div
-          onClick={() => setShowForm(false)}
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            background: "rgba(0,0,0,0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: "white",
-              padding: 20,
-              borderRadius: 12,
-              width: "90%",
-              maxWidth: 400,
-            }}
-          >
-            <button
-              onClick={() => setShowForm(false)}
-              style={{ float: "right", border: "none", background: "none" }}
-            >
-              ✖
-            </button>
+  <div
+    onClick={() => setShowForm(false)}
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      background: "rgba(0,0,0,0.6)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 9999, // 🔥 THIS FIXES YOUR ISSUE
+    }}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        background: "white",
+        padding: 20,
+        borderRadius: 12,
+        width: "90%",
+        maxWidth: 400,
+        position: "relative",
+      }}
+    >
+      <button
+        onClick={() => setShowForm(false)}
+        style={{
+          position: "absolute",
+          top: 10,
+          right: 10,
+          border: "none",
+          background: "none",
+          fontSize: 18,
+          cursor: "pointer",
+        }}
+      >
+        ✖
+      </button>
 
-            <UploadForm />
-          </div>
-        </div>
-      )}
+      <UploadForm />
+    </div>
+  </div>
+)}
 
       {/* FEED */}
       <PetFeed pets={pets} />
