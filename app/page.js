@@ -6,15 +6,13 @@ import Map from "@/components/Map";
 import UploadForm from "@/components/UploadForm";
 import { Home, Plus, Search, Heart } from "lucide-react";
 
-export default function Home() {
+export default function Page() {
   const [pets, setPets] = useState([]);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(null);
 
-  // =========================
-  // DATA
-  // =========================
   useEffect(() => {
-    const loadPets = async () => {
+    const fetchPets = async () => {
       const { data } = await supabase
         .from("lost_pets")
         .select("*")
@@ -23,64 +21,75 @@ export default function Home() {
       setPets(data || []);
     };
 
-    loadPets();
+    fetchPets();
   }, []);
 
   return (
     <div style={styles.app}>
 
-      {/* 🗺 MAP (BASE LAYER) */}
-      <Map pets={pets} />
+      {/* MAP LAYER */}
+      <div style={styles.map}>
+        <Map pets={pets} activePet={active} />
+      </div>
 
-      {/* 🧭 TOP HUD */}
-      <div style={styles.topHUD}>
+      {/* TOP BAR */}
+      <div style={styles.topBar}>
         🐾 PawSignal
       </div>
 
-      {/* 🐾 FLOATING PET CARDS */}
-      <div style={styles.cardRail}>
+      {/* SNAP FEED */}
+      <div style={styles.feed}>
         {pets.map((p) => (
-          <div key={p.id} style={styles.card}>
+          <div
+            key={p.id}
+            style={{
+              ...styles.card,
+              border: active?.id === p.id
+                ? "2px solid #4ade80"
+                : "1px solid rgba(255,255,255,0.08)",
+            }}
+            onClick={() => setActive(p)}
+          >
             {p.image_url ? (
-              <img src={p.image_url} style={styles.cardImg} />
+              <img src={p.image_url} style={styles.img} />
             ) : (
               <div style={styles.noImg}>No Image</div>
             )}
 
-            <div style={styles.cardInfo}>
-              <h4>{p.name}</h4>
-              <p>📍 Nearby</p>
+            <div style={styles.info}>
+              <div style={styles.name}>{p.name || "Unknown"}</div>
+              <div style={styles.meta}>Tap to locate</div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* ➕ FLOATING ACTION BUTTON */}
-      <button style={styles.fab} onClick={() => setSheetOpen(true)}>
+      {/* FLOAT ACTION BUTTON */}
+      <button style={styles.fab} onClick={() => setOpen(true)}>
         <Plus size={26} />
       </button>
 
-      {/* 📱 BOTTOM NAV */}
-      <div style={styles.bottomNav}>
-        <button style={styles.navItemActive}>
-          <Home size={20} />
+      {/* BOTTOM NAV */}
+      <div style={styles.nav}>
+        <button style={styles.navActive}>
+          <Home size={18} />
           <span>Home</span>
         </button>
 
         <button style={styles.navItem}>
-          <Search size={20} />
+          <Search size={18} />
           <span>Search</span>
         </button>
 
         <button style={styles.navItem}>
-          <Heart size={20} />
+          <Heart size={18} />
           <span>Saved</span>
         </button>
       </div>
 
-      {/* 📥 BOTTOM SHEET */}
-      {sheetOpen && (
-        <div style={styles.overlay} onClick={() => setSheetOpen(false)}>
+      {/* BOTTOM SHEET */}
+      {open && (
+        <div style={styles.overlay} onClick={() => setOpen(false)}>
           <div style={styles.sheet} onClick={(e) => e.stopPropagation()}>
             <div style={styles.handle} />
             <UploadForm />
@@ -95,104 +104,119 @@ const styles = {
   app: {
     position: "relative",
     height: "100vh",
+    width: "100vw",
     overflow: "hidden",
+    background: "#0b0f14",
   },
 
-  topHUD: {
+  map: {
     position: "absolute",
-    top: 10,
-    left: 10,
-    right: 10,
-    zIndex: 1000,
-    background: "rgba(0,0,0,0.6)",
-    backdropFilter: "blur(10px)",
+    inset: 0,
+    zIndex: 0,
+  },
+
+  topBar: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+    right: 12,
+    zIndex: 10,
+    background: "rgba(0,0,0,0.55)",
+    backdropFilter: "blur(14px)",
     color: "white",
-    padding: 10,
-    borderRadius: 12,
     textAlign: "center",
-    fontWeight: "600",
+    padding: "10px",
+    borderRadius: 14,
+    fontWeight: 600,
   },
 
-  cardRail: {
+  feed: {
     position: "absolute",
-    bottom: 100,
+    bottom: 110,
     left: 0,
     right: 0,
     display: "flex",
-    gap: 14,
+    gap: 12,
+    padding: "0 14px",
     overflowX: "auto",
-    padding: "0 16px",
-    zIndex: 1000,
+    zIndex: 10,
   },
 
   card: {
-    minWidth: 180,
-    background: "white",
+    minWidth: 170,
     borderRadius: 16,
     overflow: "hidden",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+    background: "rgba(255,255,255,0.95)",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
   },
 
-  cardImg: {
+  img: {
     width: "100%",
-    height: 130,
+    height: 120,
     objectFit: "cover",
   },
 
   noImg: {
-    height: 130,
+    height: 120,
     background: "#eee",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
   },
 
-  cardInfo: {
+  info: {
     padding: 10,
+  },
+
+  name: {
+    fontSize: 13,
+    fontWeight: 600,
+  },
+
+  meta: {
+    fontSize: 11,
+    opacity: 0.7,
   },
 
   fab: {
     position: "absolute",
     bottom: 110,
-    right: 20,
-    width: 60,
-    height: 60,
+    right: 18,
+    width: 62,
+    height: 62,
     borderRadius: "50%",
     border: "none",
-    background: "linear-gradient(135deg,#ff6b6b,#ff3b3b)",
+    background: "linear-gradient(135deg,#ff6b6b,#ff2d2d)",
     color: "white",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
-    zIndex: 1000,
+    zIndex: 10,
+    boxShadow: "0 15px 40px rgba(0,0,0,0.4)",
   },
 
-  bottomNav: {
+  nav: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    height: 80,
+    height: 78,
     background: "rgba(0,0,0,0.85)",
-    backdropFilter: "blur(12px)",
     display: "flex",
     justifyContent: "space-around",
     alignItems: "center",
-    zIndex: 1000,
+    zIndex: 10,
+    borderTop: "1px solid rgba(255,255,255,0.08)",
   },
 
   navItem: {
     background: "transparent",
     border: "none",
-    color: "#aaa",
+    color: "#888",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     fontSize: 11,
   },
 
-  navItemActive: {
+  navActive: {
     background: "transparent",
     border: "none",
     color: "#4ade80",
@@ -206,7 +230,7 @@ const styles = {
     position: "fixed",
     inset: 0,
     background: "rgba(0,0,0,0.6)",
-    zIndex: 2000,
+    zIndex: 100,
   },
 
   sheet: {
@@ -214,14 +238,15 @@ const styles = {
     bottom: 0,
     left: 0,
     right: 0,
-    background: "#111827",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    background: "#0f172a",
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
     padding: 16,
+    animation: "slideUp 0.25s ease",
   },
 
   handle: {
-    width: 40,
+    width: 44,
     height: 5,
     background: "#555",
     borderRadius: 10,
