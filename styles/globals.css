@@ -1,32 +1,63 @@
-/* RESET */
+/* =========================
+   RESET
+========================= */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* BASE */
+/* IMPORTANT: avoid global "all" transitions (causes jank) */
+button,
+input,
+textarea,
+.card {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.2s ease;
+}
+
+/* =========================
+   BASE
+========================= */
 body {
   font-family: Arial, sans-serif;
   background: #F8FAFC;
+  color: #111827;
   text-align: center;
   padding: 0 10px;
 }
 
-/* HERO */
-.hero {
-  padding: 40px 10px;
-}
-
+/* =========================
+   TYPOGRAPHY
+========================= */
 h1 {
   font-size: 36px;
+  font-weight: 700;
 }
 
 h2 {
   color: #2F80ED;
+  font-weight: 600;
 }
 
-/* BUTTON */
+/* =========================
+   HERO
+========================= */
+.hero {
+  padding: 40px 10px;
+}
+
+/* =========================
+   BUTTONS (APPLE-LIKE FEEL)
+========================= */
+button {
+  cursor: pointer;
+}
+
+button:active {
+  transform: scale(0.96);
+}
+
+/* Primary button */
 .btn {
   background: #EB5757;
   color: white;
@@ -39,30 +70,46 @@ h2 {
   max-width: 350px;
 }
 
-/* INPUTS */
-input, textarea {
+/* =========================
+   INPUTS
+========================= */
+input,
+textarea {
   padding: 12px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+  border-radius: 10px;
+  border: 1px solid #D1D5DB;
   width: 100%;
   max-width: 350px;
   margin-top: 10px;
+  font-size: 14px;
+  outline: none;
 }
 
 textarea {
   height: 80px;
 }
 
-/* MAP */
+/* focus = modern UX */
+input:focus,
+textarea:focus {
+  border-color: #2F80ED;
+  box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.15);
+}
+
+/* =========================
+   MAP
+========================= */
 #map {
   height: 300px;
   width: 100%;
   max-width: 600px;
   margin: 20px auto;
-  border-radius: 10px;
+  border-radius: 14px;
 }
 
-/* SECTIONS */
+/* =========================
+   SECTIONS
+========================= */
 .section {
   padding: 40px 20px;
 }
@@ -73,15 +120,60 @@ textarea {
 }
 
 .section.dark p {
-  color: #d1d5db;
+  color: #D1D5DB;
 }
 
-/* PET LIST */
+/* =========================
+   PET LIST
+========================= */
 #pet_list {
   margin-top: 20px;
 }
 
-/* MOBILE OPTIMIZATION */
+/* =========================
+   ANIMATIONS (CLEANED)
+========================= */
+
+/* Map / UI entrance */
+@keyframes slideUp {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* soft pulse (status / zones) */
+@keyframes pulseSoft {
+  0% { opacity: 0.85; }
+  50% { opacity: 1; }
+  100% { opacity: 0.85; }
+}
+
+/* alert glow */
+@keyframes warningGlow {
+  0% { box-shadow: 0 0 0 rgba(255,0,0,0.2); }
+  50% { box-shadow: 0 0 18px rgba(255,0,0,0.35); }
+  100% { box-shadow: 0 0 0 rgba(255,0,0,0.2); }
+}
+
+/* marker pulse (map entities) */
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.06); opacity: 0.85; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.pulse {
+  animation: pulse 1.6s infinite;
+}
+
+/* =========================
+   MOBILE OPTIMIZATION
+========================= */
 @media (min-width: 768px) {
   h1 {
     font-size: 48px;
