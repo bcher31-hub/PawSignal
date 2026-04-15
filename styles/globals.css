@@ -1,5 +1,5 @@
 /* =========================
-   RESET
+   RESET + BASE
 ========================= */
 * {
   box-sizing: border-box;
@@ -7,13 +7,11 @@
   padding: 0;
 }
 
-/* =========================
-   BASE THEME (DARK MODERN APP)
-========================= */
 body {
   background: #0b0f14;
   color: white;
   font-family: Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
 
@@ -21,14 +19,14 @@ body {
    MAP
 ========================= */
 #map {
-  border-radius: 14px;
+  border-radius: 16px;
+  overflow: hidden;
 }
 
 /* =========================
    INPUTS
 ========================= */
-input,
-textarea {
+input, textarea {
   background: #111827;
   color: white;
   border: 1px solid #2a2f3a;
@@ -38,85 +36,107 @@ textarea {
 }
 
 /* focus glow */
-input:focus,
-textarea:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+input:focus, textarea:focus {
+  border-color: #ff6b6b;
+  box-shadow: 0 0 0 3px rgba(255,107,107,0.15);
 }
 
 /* =========================
-   BUTTON TAP FEEL
+   BUTTON FEEL (MOBILE)
 ========================= */
 button {
   cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 button:active {
   transform: scale(0.96);
 }
 
-/* smooth micro-interactions */
-button,
-input,
-textarea,
-.card {
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.2s ease;
-}
-
 /* =========================
-   FEED LIVING ANIMATIONS
+   GRID LAYOUT FIX (FEED)
 ========================= */
-
-/* entry animation */
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* soft breathing pulse */
-@keyframes pulseSoft {
-  0% { opacity: 0.85; }
-  50% { opacity: 1; }
-  100% { opacity: 0.85; }
-}
-
-/* urgent glow */
-@keyframes warningGlow {
-  0% { box-shadow: 0 0 0 rgba(255,0,0,0.2); }
-  50% { box-shadow: 0 0 18px rgba(255,0,0,0.35); }
-  100% { box-shadow: 0 0 0 rgba(255,0,0,0.2); }
-}
-
-/* feed pulse */
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.04); }
-  100% { transform: scale(1); }
-}
-
-/* reusable classes */
-.pulse {
-  animation: pulse 1.6s infinite;
-}
-
-.softPulse {
-  animation: pulseSoft 2.5s infinite;
-}
-
-.urgentGlow {
-  animation: warningGlow 2s infinite;
+.feed-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  padding: 12px;
 }
 
 /* =========================
-   MOBILE FEEL OPTIMIZATION
+   CARD BASE (FLOATY + SMALL)
+========================= */
+.card {
+  background: rgba(17, 24, 39, 0.88);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  backdrop-filter: blur(14px);
+  transition: 0.2s ease;
+  transform: translateY(0);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+}
+
+/* =========================
+   IMAGE FIX (CRITICAL)
+========================= */
+.card img {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+
+/* =========================
+   TEXT SCALE (CLEAN UX)
+========================= */
+.card h3 {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.card p {
+  font-size: 12px;
+  opacity: 0.75;
+  line-height: 1.3;
+}
+
+/* =========================
+   FLOAT ANIMATION
+========================= */
+@keyframes floatCard {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-2px); }
+  100% { transform: translateY(0px); }
+}
+
+.float {
+  animation: floatCard 3s ease-in-out infinite;
+}
+
+/* =========================
+   BOTTOM SHEET ANIMATION
+========================= */
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* =========================
+   MOBILE OPTIMIZATION
 ========================= */
 @media (min-width: 768px) {
+  .feed-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+
   #map {
     height: 420px;
   }
