@@ -16,17 +16,17 @@ function calculateRecoveryScore(pet) {
   return Math.max(5, Math.min(100, Math.round(score)));
 }
 
-// 🎨 Score color helper (adds emotional UX layer)
+// 🎨 Emotional scoring system
 function getScoreColor(score) {
-  if (score >= 75) return "#2ecc71"; // green
-  if (score >= 45) return "#f39c12"; // orange
-  return "#e74c3c"; // red
+  if (score >= 75) return "#22c55e"; // green
+  if (score >= 45) return "#f59e0b"; // amber
+  return "#ef4444"; // red
 }
 
 export default function PetFeed({ pets }) {
   if (!pets || pets.length === 0) {
     return (
-      <div style={{ padding: "20px", textAlign: "center", color: "#666" }}>
+      <div style={{ padding: 20, textAlign: "center", color: "#94a3b8" }}>
         <h2>Recently Reported Pets</h2>
         <p>No pets reported yet 🐾</p>
       </div>
@@ -34,14 +34,18 @@ export default function PetFeed({ pets }) {
   }
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2 style={{ marginBottom: "15px" }}>Recently Reported Pets</h2>
+    <div style={{ padding: 16 }}>
+      {/* HEADER */}
+      <h2 style={{ marginBottom: 12, fontSize: 18 }}>
+        🧠 Active Pet Reports
+      </h2>
 
+      {/* GRID */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
-          gap: "15px",
+          gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+          gap: 12,
         }}
       >
         {pets.map((p) => {
@@ -51,13 +55,16 @@ export default function PetFeed({ pets }) {
           return (
             <div
               key={p.id}
+              className="card"
               style={{
-                border: "1px solid #e5e5e5",
-                borderRadius: "12px",
-                padding: "12px",
-                background: "#fff",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-                transition: "0.2s",
+                background: "rgba(17,24,39,0.85)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 16,
+                padding: 12,
+                boxShadow: "0 10px 25px rgba(0,0,0,0.35)",
+                backdropFilter: "blur(14px)",
+                transition: "0.2s ease",
+                transform: "translateY(0px)",
               }}
             >
               {/* IMAGE */}
@@ -67,24 +74,23 @@ export default function PetFeed({ pets }) {
                   alt={p.name}
                   style={{
                     width: "100%",
-                    height: "160px",
+                    height: 150,
                     objectFit: "cover",
-                    borderRadius: "10px",
-                    marginBottom: "10px",
+                    borderRadius: 12,
+                    marginBottom: 10,
                   }}
-                  onError={(e) => (e.target.style.display = "none")}
                 />
               ) : (
                 <div
                   style={{
-                    height: "160px",
-                    background: "#f3f3f3",
-                    borderRadius: "10px",
-                    marginBottom: "10px",
+                    height: 150,
+                    borderRadius: 12,
+                    background: "#0f172a",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    color: "#999",
+                    color: "#64748b",
+                    marginBottom: 10,
                   }}
                 >
                   No Image
@@ -92,44 +98,46 @@ export default function PetFeed({ pets }) {
               )}
 
               {/* NAME */}
-              <h3 style={{ margin: "5px 0" }}>
-                {p.name || "Unknown"}
+              <h3 style={{ margin: "4px 0", fontSize: 15 }}>
+                {p.name || "Unknown Pet"}
               </h3>
 
               {/* TYPE */}
-              <p style={{ margin: "5px 0", color: "#555" }}>
-                🐕 {p.type || "Unknown"}
+              <p style={{ fontSize: 13, color: "#94a3b8" }}>
+                🐾 {p.type || "Unknown"}
               </p>
 
               {/* DESCRIPTION */}
               <p
                 style={{
-                  fontSize: "14px",
-                  color: "#666",
-                  minHeight: "40px",
+                  fontSize: 13,
+                  color: "#cbd5e1",
+                  marginTop: 6,
+                  minHeight: 36,
                 }}
               >
                 {p.description || "No description provided"}
               </p>
 
-              {/* 🧠 RECOVERY INTELLIGENCE */}
+              {/* 🧠 INTELLIGENCE BAR */}
               <div
                 style={{
                   marginTop: 10,
-                  padding: "8px",
-                  borderRadius: "8px",
-                  background: "#f9f9f9",
+                  padding: "8px 10px",
+                  borderRadius: 10,
                   border: `1px solid ${color}`,
+                  background: "rgba(255,255,255,0.03)",
                 }}
               >
-                <p style={{ margin: 0, fontSize: "13px", color }}>
-                  🧠 Recovery Chance: {score}%
+                <p style={{ margin: 0, fontSize: 13, color: "#fff" }}>
+                  🧠 Recovery Chance:{" "}
+                  <span style={{ color }}>{score}%</span>
                 </p>
               </div>
 
               {/* TIMESTAMP */}
               {p.created_at && (
-                <p style={{ fontSize: "12px", color: "#999", marginTop: 8 }}>
+                <p style={{ fontSize: 11, color: "#64748b", marginTop: 8 }}>
                   📅 {new Date(p.created_at).toLocaleString()}
                 </p>
               )}
