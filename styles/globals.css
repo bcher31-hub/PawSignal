@@ -7,21 +7,18 @@
   padding: 0;
 }
 
-/* IMPORTANT: avoid global "all" transitions (causes jank) */
-button,
-input,
-textarea,
-.card {
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.2s ease;
+/* Prevent layout jank */
+html, body {
+  height: 100%;
 }
 
 /* =========================
-   BASE
+   BASE THEME (DARK OPS UI)
 ========================= */
 body {
   font-family: Arial, sans-serif;
-  background: #F8FAFC;
-  color: #111827;
+  background: #0b0f14; /* deep tactical dark */
+  color: #e5e7eb;
   text-align: center;
   padding: 0 10px;
 }
@@ -32,11 +29,13 @@ body {
 h1 {
   font-size: 36px;
   font-weight: 700;
+  color: #ffffff;
 }
 
 h2 {
-  color: #2F80ED;
+  font-size: 20px;
   font-weight: 600;
+  color: #60a5fa;
 }
 
 /* =========================
@@ -47,57 +46,56 @@ h2 {
 }
 
 /* =========================
-   BUTTONS (APPLE-LIKE FEEL)
+   BUTTON SYSTEM (TACTICAL UI)
 ========================= */
 button {
   cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.2s ease;
 }
 
 button:active {
   transform: scale(0.96);
 }
 
-/* Primary button */
+/* Primary CTA */
 .btn {
-  background: #EB5757;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
   color: white;
   padding: 12px 20px;
   border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  margin-top: 10px;
+  border-radius: 12px;
   width: 100%;
   max-width: 350px;
+  font-weight: 600;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
 }
 
 /* =========================
-   INPUTS
+   INPUT SYSTEM
 ========================= */
 input,
 textarea {
+  background: #111827;
+  color: white;
+  border: 1px solid #2a2f3a;
   padding: 12px;
   border-radius: 10px;
-  border: 1px solid #D1D5DB;
   width: 100%;
   max-width: 350px;
   margin-top: 10px;
   font-size: 14px;
   outline: none;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 
-textarea {
-  height: 80px;
-}
-
-/* focus = modern UX */
 input:focus,
 textarea:focus {
-  border-color: #2F80ED;
-  box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.15);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
 }
 
 /* =========================
-   MAP
+   MAP CONTAINER
 ========================= */
 #map {
   height: 300px;
@@ -105,10 +103,12 @@ textarea:focus {
   max-width: 600px;
   margin: 20px auto;
   border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
 }
 
 /* =========================
-   SECTIONS
+   SECTION LAYOUT
 ========================= */
 .section {
   padding: 40px 20px;
@@ -120,7 +120,7 @@ textarea:focus {
 }
 
 .section.dark p {
-  color: #D1D5DB;
+  color: #9ca3af;
 }
 
 /* =========================
@@ -131,22 +131,16 @@ textarea:focus {
 }
 
 /* =========================
-   ANIMATIONS (CLEANED)
+   ANIMATIONS (CONTROLLED SYSTEM)
 ========================= */
 
-/* Map / UI entrance */
+/* UI entrance */
 @keyframes slideUp {
-  from {
-    transform: translateY(40px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
-/* soft pulse (status / zones) */
+/* soft status pulse */
 @keyframes pulseSoft {
   0% { opacity: 0.85; }
   50% { opacity: 1; }
@@ -160,7 +154,7 @@ textarea:focus {
   100% { box-shadow: 0 0 0 rgba(255,0,0,0.2); }
 }
 
-/* marker pulse (map entities) */
+/* marker pulse */
 @keyframes pulse {
   0% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.06); opacity: 0.85; }
@@ -169,6 +163,18 @@ textarea:focus {
 
 .pulse {
   animation: pulse 1.6s infinite;
+}
+
+/* =========================
+   LEAFLET / MAP UX FIXES
+========================= */
+.leaflet-container {
+  background: #0b0f14 !important;
+}
+
+/* remove default leaflet blur on tiles */
+.leaflet-tile {
+  filter: brightness(0.95) contrast(1.05);
 }
 
 /* =========================
