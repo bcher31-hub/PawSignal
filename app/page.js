@@ -91,3 +91,140 @@ export default function Home() {
     </div>
   );
 }
+const styles = {
+  app: {
+    position: "relative",
+    height: "100vh",
+    overflow: "hidden",
+  },
+
+  topHUD: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    right: 10,
+    zIndex: 1000,
+    background: "rgba(0,0,0,0.6)",
+    backdropFilter: "blur(10px)",
+    color: "white",
+    padding: 10,
+    borderRadius: 12,
+    textAlign: "center",
+    fontWeight: "600",
+  },
+
+  cardRail: {
+    position: "absolute",
+    bottom: 100,
+    left: 0,
+    right: 0,
+    display: "flex",
+    gap: 14,
+    overflowX: "auto",
+    padding: "0 16px",
+    zIndex: 1000,
+  },
+
+  card: {
+    minWidth: 180,
+    background: "white",
+    borderRadius: 16,
+    overflow: "hidden",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+  },
+
+  cardImg: {
+    width: "100%",
+    height: 130,
+    objectFit: "cover",
+  },
+
+  noImg: {
+    height: 130,
+    background: "#eee",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  cardInfo: {
+    padding: 10,
+  },
+
+  fab: {
+    position: "absolute",
+    bottom: 110,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: "50%",
+    border: "none",
+    background: "linear-gradient(135deg,#ff6b6b,#ff3b3b)",
+    color: "white",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
+    zIndex: 1000,
+  },
+
+  bottomNav: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 80,
+    background: "rgba(0,0,0,0.85)",
+    backdropFilter: "blur(12px)",
+    display: "flex",
+    justifyContent: "space-around",
+    alignItems: "center",
+    zIndex: 1000,
+  },
+
+  navItem: {
+    background: "transparent",
+    border: "none",
+    color: "#aaa",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    fontSize: 11,
+  },
+
+  navItemActive: {
+    background: "transparent",
+    border: "none",
+    color: "#4ade80",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    fontSize: 11,
+  },
+
+  overlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.6)",
+    zIndex: 2000,
+  },
+
+  sheet: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    background: "#111827",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 16,
+  },
+
+  handle: {
+    width: 40,
+    height: 5,
+    background: "#555",
+    borderRadius: 10,
+    margin: "0 auto 10px",
+  },
+};
