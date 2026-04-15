@@ -7,189 +7,117 @@
   padding: 0;
 }
 
-/* Prevent layout jank */
-html, body {
-  height: 100%;
-}
-
 /* =========================
-   BASE THEME (DARK OPS UI)
+   BASE THEME (DARK MODERN APP)
 ========================= */
 body {
-  font-family: Arial, sans-serif;
-  background: #0b0f14; /* deep tactical dark */
-  color: #e5e7eb;
-  text-align: center;
-  padding: 0 10px;
-}
-
-/* =========================
-   TYPOGRAPHY
-========================= */
-h1 {
-  font-size: 36px;
-  font-weight: 700;
-  color: #ffffff;
-}
-
-h2 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #60a5fa;
-}
-
-/* =========================
-   HERO
-========================= */
-.hero {
-  padding: 40px 10px;
-}
-
-/* =========================
-   BUTTON SYSTEM (TACTICAL UI)
-========================= */
-button {
-  cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.2s ease;
-}
-
-button:active {
-  transform: scale(0.96);
-}
-
-/* Primary CTA */
-.btn {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+  background: #0b0f14;
   color: white;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 350px;
-  font-weight: 600;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  font-family: Arial, sans-serif;
+  overflow-x: hidden;
 }
 
 /* =========================
-   INPUT SYSTEM
+   MAP
+========================= */
+#map {
+  border-radius: 14px;
+}
+
+/* =========================
+   INPUTS
 ========================= */
 input,
 textarea {
   background: #111827;
   color: white;
   border: 1px solid #2a2f3a;
-  padding: 12px;
+  padding: 10px;
   border-radius: 10px;
-  width: 100%;
-  max-width: 350px;
-  margin-top: 10px;
-  font-size: 14px;
   outline: none;
-  transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* focus glow */
 input:focus,
 textarea:focus {
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
 }
 
 /* =========================
-   MAP CONTAINER
+   BUTTON TAP FEEL
 ========================= */
-#map {
-  height: 300px;
-  width: 100%;
-  max-width: 600px;
-  margin: 20px auto;
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+button {
+  cursor: pointer;
+}
+
+button:active {
+  transform: scale(0.96);
+}
+
+/* smooth micro-interactions */
+button,
+input,
+textarea,
+.card {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.2s ease;
 }
 
 /* =========================
-   SECTION LAYOUT
-========================= */
-.section {
-  padding: 40px 20px;
-}
-
-.section.dark {
-  background: #111827;
-  color: white;
-}
-
-.section.dark p {
-  color: #9ca3af;
-}
-
-/* =========================
-   PET LIST
-========================= */
-#pet_list {
-  margin-top: 20px;
-}
-
-/* =========================
-   ANIMATIONS (CONTROLLED SYSTEM)
+   FEED LIVING ANIMATIONS
 ========================= */
 
-/* UI entrance */
+/* entry animation */
 @keyframes slideUp {
-  from { transform: translateY(40px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* soft status pulse */
+/* soft breathing pulse */
 @keyframes pulseSoft {
   0% { opacity: 0.85; }
   50% { opacity: 1; }
   100% { opacity: 0.85; }
 }
 
-/* alert glow */
+/* urgent glow */
 @keyframes warningGlow {
   0% { box-shadow: 0 0 0 rgba(255,0,0,0.2); }
   50% { box-shadow: 0 0 18px rgba(255,0,0,0.35); }
   100% { box-shadow: 0 0 0 rgba(255,0,0,0.2); }
 }
 
-/* marker pulse */
+/* feed pulse */
 @keyframes pulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.06); opacity: 0.85; }
-  100% { transform: scale(1); opacity: 1; }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+  100% { transform: scale(1); }
 }
 
+/* reusable classes */
 .pulse {
   animation: pulse 1.6s infinite;
 }
 
-/* =========================
-   LEAFLET / MAP UX FIXES
-========================= */
-.leaflet-container {
-  background: #0b0f14 !important;
+.softPulse {
+  animation: pulseSoft 2.5s infinite;
 }
 
-/* remove default leaflet blur on tiles */
-.leaflet-tile {
-  filter: brightness(0.95) contrast(1.05);
+.urgentGlow {
+  animation: warningGlow 2s infinite;
 }
 
 /* =========================
-   MOBILE OPTIMIZATION
+   MOBILE FEEL OPTIMIZATION
 ========================= */
 @media (min-width: 768px) {
-  h1 {
-    font-size: 48px;
-  }
-
-  .hero {
-    padding: 80px 20px;
-  }
-
   #map {
-    height: 400px;
+    height: 420px;
   }
 }
