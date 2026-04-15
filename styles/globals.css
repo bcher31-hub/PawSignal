@@ -7,6 +7,10 @@
   padding: 0;
 }
 
+html, body {
+  height: 100%;
+}
+
 body {
   background: #0b0f14;
   color: white;
@@ -21,6 +25,7 @@ body {
 #map {
   border-radius: 16px;
   overflow: hidden;
+  height: 100%;
 }
 
 /* =========================
@@ -33,28 +38,28 @@ input, textarea {
   padding: 10px;
   border-radius: 10px;
   outline: none;
+  transition: 0.2s ease;
 }
 
-/* focus glow */
 input:focus, textarea:focus {
   border-color: #ff6b6b;
-  box-shadow: 0 0 0 3px rgba(255,107,107,0.15);
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15);
 }
 
 /* =========================
-   BUTTON FEEL (MOBILE)
+   BUTTONS (MOBILE-FIRST FEEL)
 ========================= */
 button {
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.2s ease;
 }
 
 button:active {
-  transform: scale(0.96);
+  transform: scale(0.94);
 }
 
 /* =========================
-   GRID LAYOUT FIX (FEED)
+   FEED GRID (TIKTOK / UBEREATS STYLE)
 ========================= */
 .feed-grid {
   display: grid;
@@ -64,7 +69,7 @@ button:active {
 }
 
 /* =========================
-   CARD BASE (FLOATY + SMALL)
+   CARD (FLOATY MODERN UI)
 ========================= */
 .card {
   background: rgba(17, 24, 39, 0.88);
@@ -73,8 +78,8 @@ button:active {
   padding: 10px;
   box-shadow: 0 8px 20px rgba(0,0,0,0.35);
   backdrop-filter: blur(14px);
-  transition: 0.2s ease;
-  transform: translateY(0);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: fadeUp 0.4s ease both;
 }
 
 .card:hover {
@@ -82,8 +87,12 @@ button:active {
   box-shadow: 0 12px 30px rgba(0,0,0,0.5);
 }
 
+.card:active {
+  transform: scale(0.97);
+}
+
 /* =========================
-   IMAGE FIX (CRITICAL)
+   CARD IMAGE (FIXED PROPORTION)
 ========================= */
 .card img {
   width: 100%;
@@ -95,7 +104,7 @@ button:active {
 }
 
 /* =========================
-   TEXT SCALE (CLEAN UX)
+   TEXT UX
 ========================= */
 .card h3 {
   font-size: 14px;
@@ -109,28 +118,48 @@ button:active {
 }
 
 /* =========================
-   FLOAT ANIMATION
+   FLOAT ANIMATION (SUBTLE LIFE)
 ========================= */
+.float {
+  animation: floatCard 3s ease-in-out infinite;
+}
+
 @keyframes floatCard {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-2px); }
   100% { transform: translateY(0px); }
 }
 
-.float {
-  animation: floatCard 3s ease-in-out infinite;
-}
-
 /* =========================
    BOTTOM SHEET ANIMATION
 ========================= */
 @keyframes slideUp {
-  from { transform: translateY(40px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* =========================
-   MOBILE OPTIMIZATION
+   FADE UP (CARD ENTRY)
+========================= */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
+   MOBILE → TABLET UPGRADE
 ========================= */
 @media (min-width: 768px) {
   .feed-grid {
