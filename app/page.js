@@ -8,6 +8,7 @@ import UploadForm from "@/components/UploadForm";
 
 export default function Home() {
   const [pets, setPets] = useState([]);
+  const [selectedPet, setSelectedPet] = useState(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [fabOpen, setFabOpen] = useState(false);
 
@@ -25,12 +26,11 @@ export default function Home() {
   // =========================
   useEffect(() => {
     if (!("Notification" in window)) return;
-
     Notification.requestPermission();
   }, []);
 
   // =========================
-  // 🧠 DATA ENGINE (SOURCE OF TRUTH)
+  // 🔥 SUPABASE REALTIME
   // =========================
   useEffect(() => {
     const loadPets = async () => {
@@ -45,7 +45,7 @@ export default function Home() {
     loadPets();
 
     const channel = supabase
-      .channel("lost_pets_realtime")
+      .channel("lost_pets")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "lost_pets" },
@@ -63,97 +63,35 @@ export default function Home() {
   }, []);
 
   // =========================
-  // 🧠 UI MODE (EMOTIONAL STATE)
+  // 🧠 LISTEN FOR MAP EVENTS
   // =========================
-  const nearbyCount = pets.length;
+  useEffect(() => {
+    const handler = (e) => setSelectedPet(e.detail);
+    window.addEventListener("open-pet", handler);
+    return () => window.removeEventListener("open-pet", handler);
+  }, []);
 
-  const uiMode =
-    nearbyCount === 0 ? "calm" :
-    nearbyCount < 3 ? "watch" :
-    "alert";
-
-  // =========================
-  // 🎨 STYLES
-  // =========================
-  const glassHeader = {
-    margin: 10,
-    padding: 12,
-    borderRadius: 14,
-    textAlign: "center",
-    fontWeight: "bold",
-    backdropFilter: "blur(10px)",
-    background: "rgba(255,255,255,0.7)",
-    boxShadow: "0 8px 20px rgba(0,0,0,0.05)"
-  };
-
-  const fabMain = {
-    width: 56,
-    height: 56,
-    borderRadius: "50%",
-    border: "none",
-    background: "linear-gradient(135deg,#ff6b6b,#ff3b3b)",
-    color: "white",
-    fontSize: 24,
-    boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-    cursor: "pointer",
-  };
-
-  const fabAction = {
-    padding: "10px 14px",
-    borderRadius: 12,
-    border: "none",
-    background: "rgba(255,255,255,0.9)",
-    backdropFilter: "blur(10px)",
-    boxShadow: "0 6px 20px rgba(0,0,0,0.1)",
-    fontSize: 14,
-    cursor: "pointer"
-  };
-
-  // =========================
-  // 🚀 UI
-  // =========================
   return (
-    <div style={{ fontFamily: "Arial", paddingBottom: 80 }}>
+    <div style={{ fontFamily: "Arial", padding: 10 }}>
 
-      {/* 🍎 GLASS HEADER */}
-      <div style={glassHeader}>
+      {/* HEADER */}
+      <div style={{
+        padding: 12,
+        borderRadius: 14,
+        textAlign: "center",
+        fontWeight: "bold",
+        backdropFilter: "blur(10px)",
+        background: "rgba(255,255,255,0.7)",
+        boxShadow: "0 8px 20px rgba(0,0,0,0.05)"
+      }}>
         🐾 PawSignal
       </div>
 
-      {/* 🧠 STATUS BAR */}
-      <div style={{
-        margin: 10,
-        padding: 12,
-        borderRadius: 12,
-        textAlign: "center",
-        fontWeight: 600,
-        background:
-          uiMode === "calm" ? "#e8f5e9" :
-          uiMode === "watch" ? "#fff8e1" :
-          "#ffebee",
-      }}>
-        {uiMode === "calm" && "😌 All clear in your area"}
-        {uiMode === "watch" && "👀 Stay alert — pets nearby"}
-        {uiMode === "alert" && "🚨 High activity zone detected"}
-      </div>
+      {/* MAP */}
+      <Map pets={pets} />
 
-      {/* 🗺️ MAP */}
-      <div style={{
-        filter:
-          uiMode === "calm" ? "brightness(1)" :
-          uiMode === "watch" ? "brightness(0.95)" :
-          "brightness(0.9) saturate(1.2)",
-        transition: "0.3s ease"
-      }}>
-        <Map pets={pets} />
-      </div>
-
-      {/* 📡 FEED */}
-      <PetFeed pets={pets} />
-
-      {/* 🚀 FLOATING ACTION SYSTEM */}
+      {/* FLOATING ACTION BUTTON */}
       <div style={{ position: "fixed", bottom: 25, right: 20, zIndex: 9999 }}>
-
         {fabOpen && (
           <div style={{
             marginBottom: 10,
@@ -162,35 +100,18 @@ export default function Home() {
             gap: 10,
             alignItems: "flex-end"
           }}>
-            <button style={fabAction}>
-              📍 Center Map
-            </button>
-
-            <button
-              style={fabAction}
-              onClick={() => {
-                setSheetOpen(true);
-                setFabOpen(false);
-              }}
-            >
-              🐾 Report Pet
-            </button>
-
-            <button style={fabAction}>
-              🔔 Alerts
-            </button>
+            <button style={fabAction}>📍 Center</button>
+            <button style={fabAction} onClick={() => setSheetOpen(true)}>🐾 Report</button>
+            <button style={fabAction}>🔔 Alerts</button>
           </div>
         )}
 
-        <button
-          onClick={() => setFabOpen(!fabOpen)}
-          style={fabMain}
-        >
+        <button onClick={() => setFabOpen(!fabOpen)} style={fabMain}>
           {fabOpen ? "✕" : "+"}
         </button>
       </div>
 
-      {/* 📱 BOTTOM SHEET */}
+      {/* BOTTOM SHEET */}
       {sheetOpen && (
         <div
           onClick={() => setSheetOpen(false)}
@@ -198,7 +119,6 @@ export default function Home() {
             position: "fixed",
             inset: 0,
             background: "rgba(0,0,0,0.35)",
-            backdropFilter: "blur(4px)",
             zIndex: 10000,
           }}
         >
@@ -210,45 +130,118 @@ export default function Home() {
               left: 0,
               right: 0,
               background: "rgba(255,255,255,0.9)",
-              backdropFilter: "blur(18px)",
-              borderTopLeftRadius: 18,
-              borderTopRightRadius: 18,
+              backdropFilter: "blur(16px)",
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
               padding: 16,
-              boxShadow: "0 -10px 30px rgba(0,0,0,0.2)",
+            }}
+          >
+            <div style={{
+              width: 40,
+              height: 5,
+              background: "#ccc",
+              borderRadius: 10,
+              margin: "0 auto 10px",
+            }} />
+            <UploadForm />
+          </div>
+        </div>
+      )}
+
+      {/* 🧠 PET CARD */}
+      {selectedPet && (
+        <div
+          onClick={() => setSelectedPet(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.3)",
+            zIndex: 10000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              background: "rgba(255,255,255,0.95)",
+              backdropFilter: "blur(16px)",
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              padding: 16,
               animation: "slideUp 0.25s ease",
             }}
           >
             <div style={{
               width: 40,
               height: 5,
-              background: "#ddd",
+              background: "#ccc",
               borderRadius: 10,
-              margin: "0 auto 10px auto",
+              margin: "0 auto 12px",
             }} />
 
-            <h3 style={{ marginBottom: 10 }}>
-              🐾 Report Lost Pet
-            </h3>
+            {selectedPet.image_url && (
+              <img
+                src={selectedPet.image_url}
+                style={{
+                  width: "100%",
+                  height: 180,
+                  objectFit: "cover",
+                  borderRadius: 12,
+                }}
+              />
+            )}
 
-            <UploadForm />
+            <h2>{selectedPet.name}</h2>
+            <p>🐾 {selectedPet.type}</p>
+            <p>{selectedPet.description}</p>
 
-            <button
-              onClick={() => setSheetOpen(false)}
-              style={{
-                marginTop: 10,
-                width: "100%",
-                padding: 12,
-                borderRadius: 12,
-                border: "none",
-                background: "#eee",
-              }}
-            >
-              Close
-            </button>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button style={actionPrimary}>📞 Contact</button>
+              <button style={actionSecondary}>📍 Navigate</button>
+            </div>
           </div>
         </div>
       )}
 
+      <PetFeed pets={pets} />
     </div>
   );
 }
+
+const fabMain = {
+  width: 60,
+  height: 60,
+  borderRadius: "50%",
+  border: "none",
+  background: "#ff6b6b",
+  color: "white",
+  fontSize: 26,
+  boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+};
+
+const fabAction = {
+  padding: "10px 14px",
+  borderRadius: 12,
+  border: "none",
+  background: "white",
+};
+
+const actionPrimary = {
+  flex: 1,
+  padding: 12,
+  borderRadius: 12,
+  border: "none",
+  background: "#ff6b6b",
+  color: "white",
+};
+
+const actionSecondary = {
+  flex: 1,
+  padding: 12,
+  borderRadius: 12,
+  border: "none",
+  background: "#eee",
+};
