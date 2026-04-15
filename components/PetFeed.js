@@ -1,6 +1,5 @@
 "use client";
 
-// 🧠 Recovery Intelligence Engine
 function calculateRecoveryScore(pet) {
   const now = new Date();
   const created = new Date(pet.created_at);
@@ -16,81 +15,94 @@ function calculateRecoveryScore(pet) {
   return Math.max(5, Math.min(100, Math.round(score)));
 }
 
-// 🎨 Emotional scoring system
 function getScoreColor(score) {
-  if (score >= 75) return "#22c55e"; // green
-  if (score >= 45) return "#f59e0b"; // amber
-  return "#ef4444"; // red
+  if (score >= 75) return "#2ecc71";
+  if (score >= 45) return "#f39c12";
+  return "#e74c3c";
 }
 
-export default function PetFeed({ pets }) {
+function isNew(created_at) {
+  const now = new Date();
+  const time = new Date(created_at);
+  return (now - time) / 60000 < 5; // 5 min “new” window
+}
+
+export default function PetFeed({ pets = [], setSelectedPet }) {
   if (!pets || pets.length === 0) {
     return (
-      <div style={{ padding: 20, textAlign: "center", color: "#94a3b8" }}>
+      <div style={{ padding: 20, textAlign: "center", color: "#aaa" }}>
         <h2>Recently Reported Pets</h2>
-        <p>No pets reported yet 🐾</p>
+        <p>No activity yet 🐾</p>
       </div>
     );
   }
 
+  // 🧠 SORT: newest first (alive feed behavior)
+  const sortedPets = [...pets].sort(
+    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+  );
+
   return (
-    <div style={{ padding: 16 }}>
-      {/* HEADER */}
+    <div style={{ padding: 16, paddingBottom: 120 }}>
       <h2 style={{ marginBottom: 12, fontSize: 18 }}>
-        🧠 Active Pet Reports
+        🧠 Live Pet Activity Feed
       </h2>
 
-      {/* GRID */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-          gap: 12,
-        }}
-      >
-        {pets.map((p) => {
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {sortedPets.map((p) => {
           const score = calculateRecoveryScore(p);
           const color = getScoreColor(score);
+          const newItem = isNew(p.created_at);
 
           return (
             <div
               key={p.id}
+              onClick={() => setSelectedPet?.(p)}
               className="card"
               style={{
-                background: "rgba(17,24,39,0.85)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 16,
-                padding: 12,
-                boxShadow: "0 10px 25px rgba(0,0,0,0.35)",
-                backdropFilter: "blur(14px)",
-                transition: "0.2s ease",
-                transform: "translateY(0px)",
+                background: "rgba(17,24,39,0.92)",
+                border: `1px solid rgba(255,255,255,0.08)`,
+                borderRadius: 18,
+                padding: 14,
+                boxShadow: "0 18px 40px rgba(0,0,0,0.45)",
+                backdropFilter: "blur(16px)",
+                position: "relative",
+                cursor: "pointer",
+
+                animation: newItem
+                  ? "slideUp 0.3s ease, warningGlow 2s infinite"
+                  : "slideUp 0.3s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform =
+                  "translateY(-6px) scale(1.01)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0px)";
               }}
             >
               {/* IMAGE */}
               {p.image_url ? (
                 <img
                   src={p.image_url}
-                  alt={p.name}
                   style={{
                     width: "100%",
-                    height: 150,
+                    height: 160,
                     objectFit: "cover",
-                    borderRadius: 12,
+                    borderRadius: 14,
                     marginBottom: 10,
                   }}
                 />
               ) : (
                 <div
                   style={{
-                    height: 150,
-                    borderRadius: 12,
-                    background: "#0f172a",
+                    height: 160,
+                    borderRadius: 14,
+                    background: "#111",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    color: "#64748b",
-                    marginBottom: 10,
+                    color: "#666",
                   }}
                 >
                   No Image
@@ -98,49 +110,55 @@ export default function PetFeed({ pets }) {
               )}
 
               {/* NAME */}
-              <h3 style={{ margin: "4px 0", fontSize: 15 }}>
-                {p.name || "Unknown Pet"}
-              </h3>
+              <h3 style={{ marginBottom: 4 }}>{p.name || "Unknown"}</h3>
 
               {/* TYPE */}
-              <p style={{ fontSize: 13, color: "#94a3b8" }}>
-                🐾 {p.type || "Unknown"}
+              <p style={{ color: "#9ca3af", fontSize: 13 }}>
+                🐕 {p.type || "Unknown"}
               </p>
 
               {/* DESCRIPTION */}
-              <p
-                style={{
-                  fontSize: 13,
-                  color: "#cbd5e1",
-                  marginTop: 6,
-                  minHeight: 36,
-                }}
-              >
+              <p style={{ fontSize: 13, color: "#cbd5e1", marginTop: 6 }}>
                 {p.description || "No description provided"}
               </p>
 
-              {/* 🧠 INTELLIGENCE BAR */}
+              {/* RECOVERY SCORE */}
               <div
                 style={{
                   marginTop: 10,
-                  padding: "8px 10px",
+                  padding: 8,
                   borderRadius: 10,
                   border: `1px solid ${color}`,
                   background: "rgba(255,255,255,0.03)",
                 }}
               >
-                <p style={{ margin: 0, fontSize: 13, color: "#fff" }}>
-                  🧠 Recovery Chance:{" "}
-                  <span style={{ color }}>{score}%</span>
+                <p style={{ margin: 0, fontSize: 12, color }}>
+                  🧠 Recovery Chance: {score}%
                 </p>
               </div>
 
-              {/* TIMESTAMP */}
-              {p.created_at && (
-                <p style={{ fontSize: 11, color: "#64748b", marginTop: 8 }}>
-                  📅 {new Date(p.created_at).toLocaleString()}
-                </p>
+              {/* NEW BADGE */}
+              {newItem && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 10,
+                    right: 10,
+                    background: "#ef4444",
+                    padding: "4px 8px",
+                    borderRadius: 20,
+                    fontSize: 10,
+                    fontWeight: 700,
+                  }}
+                >
+                  NEW
+                </div>
               )}
+
+              {/* TIMESTAMP */}
+              <p style={{ fontSize: 11, color: "#6b7280", marginTop: 8 }}>
+                {new Date(p.created_at).toLocaleString()}
+              </p>
             </div>
           );
         })}
