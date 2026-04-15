@@ -8,7 +8,10 @@ import UploadForm from "@/components/UploadForm";
 
 export default function Home() {
   const [pets, setPets] = useState([]);
+
+  // 🧠 UI STATES
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [selectedPet, setSelectedPet] = useState(null);
 
   // =========================
   // SERVICE WORKER
@@ -68,11 +71,17 @@ export default function Home() {
         🐾 PawSignal
       </div>
 
-      {/* MAP */}
-      <Map pets={pets} />
+      {/* MAP (NOW CONTROLLED) */}
+      <Map
+        pets={pets}
+        setSelectedPet={setSelectedPet}
+      />
 
-      {/* FEED */}
-      <PetFeed pets={pets} />
+      {/* FEED (NOW CLICKABLE) */}
+      <PetFeed
+        pets={pets}
+        setSelectedPet={setSelectedPet}
+      />
 
       {/* FLOATING ACTION BUTTON */}
       <button
@@ -82,7 +91,7 @@ export default function Home() {
         +
       </button>
 
-      {/* BOTTOM SHEET */}
+      {/* REPORT SHEET */}
       {sheetOpen && (
         <div style={styles.overlay} onClick={() => setSheetOpen(false)}>
           <div style={styles.sheet} onClick={(e) => e.stopPropagation()}>
@@ -95,75 +104,48 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* 🧠 PET INTELLIGENCE SHEET (NEW) */}
+      {selectedPet && (
+        <div
+          style={styles.overlay}
+          onClick={() => setSelectedPet(null)}
+        >
+          <div
+            style={styles.petSheet}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={styles.handle} />
+
+            {selectedPet.image_url && (
+              <img
+                src={selectedPet.image_url}
+                style={styles.petImage}
+              />
+            )}
+
+            <h2>🐾 {selectedPet.name}</h2>
+            <p style={{ color: "#94a3b8" }}>{selectedPet.type}</p>
+
+            <p style={{ marginTop: 10, color: "#cbd5e1" }}>
+              {selectedPet.description}
+            </p>
+
+            <div style={styles.actions}>
+              <button style={styles.actionBtn}>📍 Navigate</button>
+              <button style={styles.actionBtn}>📞 Contact</button>
+              <button style={styles.actionBtn}>⚠️ Report</button>
+            </div>
+
+            <button
+              onClick={() => setSelectedPet(null)}
+              style={styles.closeBtn}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-const styles = {
-  page: {
-    background: "#0b0f14",
-    minHeight: "100vh",
-    color: "white",
-    padding: 12,
-  },
-
-  header: {
-    textAlign: "center",
-    fontSize: 20,
-    fontWeight: 700,
-    margin: "10px 0",
-    opacity: 0.9,
-  },
-
-  fab: {
-    position: "fixed",
-    bottom: 20,
-    right: 20,
-    width: 60,
-    height: 60,
-    borderRadius: "50%",
-    border: "none",
-    background: "linear-gradient(135deg,#ff6b6b,#ff3b3b)",
-    color: "white",
-    fontSize: 28,
-    boxShadow: "0 10px 25px rgba(0,0,0,0.4)",
-    zIndex: 9999,
-  },
-
-  overlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0,0,0,0.6)",
-    backdropFilter: "blur(6px)",
-    zIndex: 9999,
-  },
-
-  sheet: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    background: "#111827",
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    padding: 16,
-  },
-
-  handle: {
-    width: 40,
-    height: 5,
-    background: "#444",
-    borderRadius: 10,
-    margin: "0 auto 10px auto",
-  },
-
-  closeBtn: {
-    marginTop: 10,
-    width: "100%",
-    padding: 10,
-    borderRadius: 10,
-    border: "none",
-    background: "#222",
-    color: "white",
-  },
-};
