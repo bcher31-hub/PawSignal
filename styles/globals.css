@@ -1,5 +1,5 @@
 /* =========================
-   RESET + BASE
+   RESET
 ========================= */
 * {
   box-sizing: border-box;
@@ -9,23 +9,20 @@
 
 html, body {
   height: 100%;
-}
-
-body {
+  width: 100%;
   background: #0b0f14;
-  color: white;
   font-family: Arial, sans-serif;
+  overflow: hidden;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
 }
 
 /* =========================
    MAP
 ========================= */
 #map {
-  border-radius: 16px;
-  overflow: hidden;
   height: 100%;
+  width: 100%;
+  border-radius: 0;
 }
 
 /* =========================
@@ -38,20 +35,14 @@ input, textarea {
   padding: 10px;
   border-radius: 10px;
   outline: none;
-  transition: 0.2s ease;
-}
-
-input:focus, textarea:focus {
-  border-color: #ff6b6b;
-  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15);
 }
 
 /* =========================
-   BUTTONS (MOBILE-FIRST FEEL)
+   BUTTON FEEDBACK
 ========================= */
 button {
   cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.2s ease;
+  transition: transform 0.15s ease;
 }
 
 button:active {
@@ -59,114 +50,9 @@ button:active {
 }
 
 /* =========================
-   FEED GRID (TIKTOK / UBEREATS STYLE)
-========================= */
-.feed-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
-  padding: 12px;
-}
-
-/* =========================
-   CARD (FLOATY MODERN UI)
-========================= */
-.card {
-  background: rgba(17, 24, 39, 0.88);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 16px;
-  padding: 10px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
-  backdrop-filter: blur(14px);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  animation: fadeUp 0.4s ease both;
-}
-
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.5);
-}
-
-.card:active {
-  transform: scale(0.97);
-}
-
-/* =========================
-   CARD IMAGE (FIXED PROPORTION)
-========================= */
-.card img {
-  width: 100%;
-  height: 110px;
-  object-fit: cover;
-  object-position: center;
-  border-radius: 12px;
-  margin-bottom: 8px;
-}
-
-/* =========================
-   TEXT UX
-========================= */
-.card h3 {
-  font-size: 14px;
-  margin-bottom: 4px;
-}
-
-.card p {
-  font-size: 12px;
-  opacity: 0.75;
-  line-height: 1.3;
-}
-
-/* =========================
-   FLOAT ANIMATION (SUBTLE LIFE)
-========================= */
-.float {
-  animation: floatCard 3s ease-in-out infinite;
-}
-
-@keyframes floatCard {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-2px); }
-  100% { transform: translateY(0px); }
-}
-
-/* =========================
-   BOTTOM SHEET ANIMATION
+   SNAP ANIMATION
 ========================= */
 @keyframes slideUp {
-  from {
-    transform: translateY(40px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* =========================
-   FADE UP (CARD ENTRY)
-========================= */
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* =========================
-   MOBILE → TABLET UPGRADE
-========================= */
-@media (min-width: 768px) {
-  .feed-grid {
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  }
-
-  #map {
-    height: 420px;
-  }
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
