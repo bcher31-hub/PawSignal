@@ -8,12 +8,10 @@ import UploadForm from "@/components/UploadForm";
 
 export default function Home() {
   const [pets, setPets] = useState([]);
-  const [selectedPet, setSelectedPet] = useState(null);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [fabOpen, setFabOpen] = useState(false);
 
   // =========================
-  // 🔥 SERVICE WORKER
+  // SERVICE WORKER
   // =========================
   useEffect(() => {
     if ("serviceWorker" in navigator) {
@@ -22,7 +20,7 @@ export default function Home() {
   }, []);
 
   // =========================
-  // 🔐 NOTIFICATIONS
+  // NOTIFICATIONS
   // =========================
   useEffect(() => {
     if (!("Notification" in window)) return;
@@ -30,7 +28,7 @@ export default function Home() {
   }, []);
 
   // =========================
-  // 🔥 SUPABASE REALTIME
+  // SUPABASE SOURCE OF TRUTH
   // =========================
   useEffect(() => {
     const loadPets = async () => {
@@ -45,7 +43,7 @@ export default function Home() {
     loadPets();
 
     const channel = supabase
-      .channel("lost_pets")
+      .channel("pets-live")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "lost_pets" },
@@ -62,186 +60,110 @@ export default function Home() {
     return () => supabase.removeChannel(channel);
   }, []);
 
-  // =========================
-  // 🧠 LISTEN FOR MAP EVENTS
-  // =========================
-  useEffect(() => {
-    const handler = (e) => setSelectedPet(e.detail);
-    window.addEventListener("open-pet", handler);
-    return () => window.removeEventListener("open-pet", handler);
-  }, []);
-
   return (
-    <div style={{ fontFamily: "Arial", padding: 10 }}>
+    <div style={styles.page}>
 
       {/* HEADER */}
-      <div style={{
-        padding: 12,
-        borderRadius: 14,
-        textAlign: "center",
-        fontWeight: "bold",
-        backdropFilter: "blur(10px)",
-        background: "rgba(255,255,255,0.7)",
-        boxShadow: "0 8px 20px rgba(0,0,0,0.05)"
-      }}>
+      <div style={styles.header}>
         🐾 PawSignal
       </div>
 
       {/* MAP */}
       <Map pets={pets} />
 
-      {/* FLOATING ACTION BUTTON */}
-      <div style={{ position: "fixed", bottom: 25, right: 20, zIndex: 9999 }}>
-        {fabOpen && (
-          <div style={{
-            marginBottom: 10,
-            display: "flex",
-            flexDirection: "column",
-            gap: 10,
-            alignItems: "flex-end"
-          }}>
-            <button style={fabAction}>📍 Center</button>
-            <button style={fabAction} onClick={() => setSheetOpen(true)}>🐾 Report</button>
-            <button style={fabAction}>🔔 Alerts</button>
-          </div>
-        )}
+      {/* FEED */}
+      <PetFeed pets={pets} />
 
-        <button onClick={() => setFabOpen(!fabOpen)} style={fabMain}>
-          {fabOpen ? "✕" : "+"}
-        </button>
-      </div>
+      {/* FLOATING ACTION BUTTON */}
+      <button
+        onClick={() => setSheetOpen(true)}
+        style={styles.fab}
+      >
+        +
+      </button>
 
       {/* BOTTOM SHEET */}
       {sheetOpen && (
-        <div
-          onClick={() => setSheetOpen(false)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.35)",
-            zIndex: 10000,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              background: "rgba(255,255,255,0.9)",
-              backdropFilter: "blur(16px)",
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
-              padding: 16,
-            }}
-          >
-            <div style={{
-              width: 40,
-              height: 5,
-              background: "#ccc",
-              borderRadius: 10,
-              margin: "0 auto 10px",
-            }} />
+        <div style={styles.overlay} onClick={() => setSheetOpen(false)}>
+          <div style={styles.sheet} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.handle} />
+            <h3 style={{ marginBottom: 10 }}>Report Lost Pet</h3>
             <UploadForm />
+            <button style={styles.closeBtn} onClick={() => setSheetOpen(false)}>
+              Close
+            </button>
           </div>
         </div>
       )}
-
-      {/* 🧠 PET CARD */}
-      {selectedPet && (
-        <div
-          onClick={() => setSelectedPet(null)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.3)",
-            zIndex: 10000,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              background: "rgba(255,255,255,0.95)",
-              backdropFilter: "blur(16px)",
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
-              padding: 16,
-              animation: "slideUp 0.25s ease",
-            }}
-          >
-            <div style={{
-              width: 40,
-              height: 5,
-              background: "#ccc",
-              borderRadius: 10,
-              margin: "0 auto 12px",
-            }} />
-
-            {selectedPet.image_url && (
-              <img
-                src={selectedPet.image_url}
-                style={{
-                  width: "100%",
-                  height: 180,
-                  objectFit: "cover",
-                  borderRadius: 12,
-                }}
-              />
-            )}
-
-            <h2>{selectedPet.name}</h2>
-            <p>🐾 {selectedPet.type}</p>
-            <p>{selectedPet.description}</p>
-
-            <div style={{ display: "flex", gap: 10 }}>
-              <button style={actionPrimary}>📞 Contact</button>
-              <button style={actionSecondary}>📍 Navigate</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <PetFeed pets={pets} />
     </div>
   );
 }
 
-const fabMain = {
-  width: 60,
-  height: 60,
-  borderRadius: "50%",
-  border: "none",
-  background: "#ff6b6b",
-  color: "white",
-  fontSize: 26,
-  boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-};
+const styles = {
+  page: {
+    background: "#0b0f14",
+    minHeight: "100vh",
+    color: "white",
+    padding: 12,
+  },
 
-const fabAction = {
-  padding: "10px 14px",
-  borderRadius: 12,
-  border: "none",
-  background: "white",
-};
+  header: {
+    textAlign: "center",
+    fontSize: 20,
+    fontWeight: 700,
+    margin: "10px 0",
+    opacity: 0.9,
+  },
 
-const actionPrimary = {
-  flex: 1,
-  padding: 12,
-  borderRadius: 12,
-  border: "none",
-  background: "#ff6b6b",
-  color: "white",
-};
+  fab: {
+    position: "fixed",
+    bottom: 20,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: "50%",
+    border: "none",
+    background: "linear-gradient(135deg,#ff6b6b,#ff3b3b)",
+    color: "white",
+    fontSize: 28,
+    boxShadow: "0 10px 25px rgba(0,0,0,0.4)",
+    zIndex: 9999,
+  },
 
-const actionSecondary = {
-  flex: 1,
-  padding: 12,
-  borderRadius: 12,
-  border: "none",
-  background: "#eee",
+  overlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.6)",
+    backdropFilter: "blur(6px)",
+    zIndex: 9999,
+  },
+
+  sheet: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    background: "#111827",
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    padding: 16,
+  },
+
+  handle: {
+    width: 40,
+    height: 5,
+    background: "#444",
+    borderRadius: 10,
+    margin: "0 auto 10px auto",
+  },
+
+  closeBtn: {
+    marginTop: 10,
+    width: "100%",
+    padding: 10,
+    borderRadius: 10,
+    border: "none",
+    background: "#222",
+    color: "white",
+  },
 };
