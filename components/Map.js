@@ -6,6 +6,7 @@ import { getDistanceMiles } from "@/lib/geo";
 export default function Map({ pets = [] }) {
   const mapRef = useRef(null);
   const leafletRef = useRef(null);
+
   const clusterRef = useRef(null);
   const heatRef = useRef(null);
   const circleRef = useRef(null);
@@ -32,23 +33,21 @@ export default function Map({ pets = [] }) {
       const map = L.map("map").setView([27.95, -82.46], 10);
       mapRef.current = map;
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")
-        .addTo(map);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap",
+      }).addTo(map);
 
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const u = {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-          };
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const u = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        };
 
-          setUser(u);
-          map.setView([u.lat, u.lng], 12);
+        setUser(u);
+        map.setView([u.lat, u.lng], 12);
 
-          L.marker([u.lat, u.lng]).addTo(map);
-        },
-        () => setUser({ lat: 27.95, lng: -82.46 })
-      );
+        L.marker([u.lat, u.lng]).addTo(map).bindPopup("📍 You are here");
+      });
     })();
   }, []);
 
@@ -65,11 +64,13 @@ export default function Map({ pets = [] }) {
     if (circleRef.current) mapRef.current.removeLayer(circleRef.current);
 
     const cluster = L.markerClusterGroup();
-    clusterRef.current = cluster;
     mapRef.current.addLayer(cluster);
+    clusterRef.current = cluster;
 
     circleRef.current = L.circle([user.lat, user.lng], {
       radius: radius * 1609,
+      color: "#ff6b6b",
+      fillOpacity: 0.08,
     }).addTo(mapRef.current);
 
     let count = 0;
@@ -79,36 +80,27 @@ export default function Map({ pets = [] }) {
     pets.forEach((p) => {
       if (!p.latitude || !p.longitude) return;
 
-      const d = getDistanceMiles(
-        user.lat,
-        user.lng,
-        p.latitude,
-        p.longitude
-      );
+      const d = getDistanceMiles(user.lat, user.lng, p.latitude, p.longitude);
 
       if (d > radius) return;
 
       count++;
       if (d < 1) urgent++;
 
-      const isUrgent = d < 1;
-
       const icon = L.divIcon({
         html: `<div style="
-          background:${isUrgent ? "#ff2d2d" : "#ff914d"};
+          background:${d < 1 ? "#ff2d2d" : "#ff914d"};
           color:white;
           padding:6px 10px;
           border-radius:20px;
           font-size:12px;
+          white-space:nowrap;
         ">${p.name}</div>`,
-        className: "",
       });
 
       const marker = L.marker([p.latitude, p.longitude], { icon });
 
-      marker.on("click", () => {
-        window.dispatchEvent(new CustomEvent("open-pet", { detail: p }));
-      });
+      marker.bindPopup(`<b>${p.name}</b><br/>${d.toFixed(1)} miles away`);
 
       cluster.addLayer(marker);
 
@@ -123,31 +115,69 @@ export default function Map({ pets = [] }) {
     setZone(zoneLevel);
     setNearbyCount(count);
 
-    heatRef.current = L.heatLayer(heatPoints).addTo(mapRef.current);
+    heatRef.current = L.heatLayer(heatPoints, {
+      radius: 30,
+      blur: 20,
+    }).addTo(mapRef.current);
   }, [pets, user, radius]);
 
   return (
     <div style={{ textAlign: "center" }}>
+
+      {/* HUD */}
       <div style={{
-        marginTop: 10,
-        padding: 10,
-        borderRadius: 10,
-        background:
-          zone === "CLEAR" ? "#e8f5e9" :
-          zone === "WATCH" ? "#fff8e1" :
-          zone === "ACTIVE" ? "#ffebee" :
-          "#b71c1c",
+        display: "flex",
+        justifyContent: "center",
+        gap: 10,
+        margin: "10px 0",
       }}>
-        🧭 {zone} ZONE • 🐾 {nearbyCount}
+        <div style={badge(zone)}>
+          🧭 {zone}
+        </div>
+
+        <div style={badge()}>
+          🐾 {nearbyCount} nearby
+        </div>
       </div>
 
+      {/* MAP */}
+      <div
+        id="map"
+        style={{
+          height: 450,
+          width: "100%",
+          borderRadius: 12,
+        }}
+      />
+
+      {/* RADIUS */}
       <input
         type="number"
         value={radius}
         onChange={(e) => setRadius(Number(e.target.value))}
+        style={input}
       />
-
-      <div id="map" style={{ height: 450, marginTop: 10 }} />
     </div>
   );
 }
+
+const badge = (zone) => ({
+  padding: "6px 12px",
+  borderRadius: 20,
+  background:
+    zone === "CLEAR" ? "#1f2937" :
+    zone === "WATCH" ? "#2d2a1f" :
+    zone === "ACTIVE" ? "#3a1f1f" :
+    "#5a0f0f",
+  color: "white",
+  fontSize: 12,
+});
+
+const input = {
+  marginTop: 10,
+  padding: 8,
+  borderRadius: 8,
+  border: "1px solid #333",
+  background: "#111",
+  color: "white",
+};
