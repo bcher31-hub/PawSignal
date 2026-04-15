@@ -3,7 +3,6 @@
 function calculateRecoveryScore(pet) {
   const now = new Date();
   const created = new Date(pet.created_at);
-
   const hoursAgo = (now - created) / (1000 * 60 * 60);
 
   let score = 100;
@@ -21,88 +20,53 @@ function getScoreColor(score) {
   return "#e74c3c";
 }
 
-function isNew(created_at) {
-  const now = new Date();
-  const time = new Date(created_at);
-  return (now - time) / 60000 < 5; // 5 min “new” window
-}
-
 export default function PetFeed({ pets = [], setSelectedPet }) {
-  if (!pets || pets.length === 0) {
+  if (!pets.length) {
     return (
-      <div style={{ padding: 20, textAlign: "center", color: "#aaa" }}>
-        <h2>Recently Reported Pets</h2>
-        <p>No activity yet 🐾</p>
+      <div style={{ padding: 20, textAlign: "center", opacity: 0.6 }}>
+        <h3>🐾 No pets reported yet</h3>
       </div>
     );
   }
 
-  // 🧠 SORT: newest first (alive feed behavior)
-  const sortedPets = [...pets].sort(
-    (a, b) => new Date(b.created_at) - new Date(a.created_at)
-  );
-
   return (
-    <div style={{ padding: 16, paddingBottom: 120 }}>
-      <h2 style={{ marginBottom: 12, fontSize: 18 }}>
-        🧠 Live Pet Activity Feed
-      </h2>
+    <div>
+      <h3 style={{ padding: "10px 12px", opacity: 0.8 }}>
+        Recently Reported
+      </h3>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        {sortedPets.map((p) => {
+      {/* GRID */}
+      <div className="feed-grid">
+        {pets.map((p) => {
           const score = calculateRecoveryScore(p);
           const color = getScoreColor(score);
-          const newItem = isNew(p.created_at);
 
           return (
             <div
               key={p.id}
+              className="card float"
               onClick={() => setSelectedPet?.(p)}
-              className="card"
-              style={{
-                background: "rgba(17,24,39,0.92)",
-                border: `1px solid rgba(255,255,255,0.08)`,
-                borderRadius: 18,
-                padding: 14,
-                boxShadow: "0 18px 40px rgba(0,0,0,0.45)",
-                backdropFilter: "blur(16px)",
-                position: "relative",
-                cursor: "pointer",
-
-                animation: newItem
-                  ? "slideUp 0.3s ease, warningGlow 2s infinite"
-                  : "slideUp 0.3s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform =
-                  "translateY(-6px) scale(1.01)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0px)";
-              }}
+              style={{ cursor: "pointer" }}
             >
-              {/* IMAGE */}
+              {/* IMAGE (FIXED CROP) */}
               {p.image_url ? (
                 <img
                   src={p.image_url}
-                  style={{
-                    width: "100%",
-                    height: 160,
-                    objectFit: "cover",
-                    borderRadius: 14,
-                    marginBottom: 10,
-                  }}
+                  alt={p.name}
+                  loading="lazy"
                 />
               ) : (
                 <div
                   style={{
-                    height: 160,
-                    borderRadius: 14,
-                    background: "#111",
+                    height: 110,
+                    borderRadius: 12,
+                    background: "#1f2937",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    color: "#666",
+                    fontSize: 12,
+                    opacity: 0.6,
+                    marginBottom: 8,
                   }}
                 >
                   No Image
@@ -110,55 +74,25 @@ export default function PetFeed({ pets = [], setSelectedPet }) {
               )}
 
               {/* NAME */}
-              <h3 style={{ marginBottom: 4 }}>{p.name || "Unknown"}</h3>
+              <h3>🐾 {p.name || "Unknown"}</h3>
 
               {/* TYPE */}
-              <p style={{ color: "#9ca3af", fontSize: 13 }}>
-                🐕 {p.type || "Unknown"}
-              </p>
+              <p>🐕 {p.type || "Unknown"}</p>
 
-              {/* DESCRIPTION */}
-              <p style={{ fontSize: 13, color: "#cbd5e1", marginTop: 6 }}>
-                {p.description || "No description provided"}
-              </p>
-
-              {/* RECOVERY SCORE */}
+              {/* SCORE */}
               <div
                 style={{
-                  marginTop: 10,
-                  padding: 8,
+                  marginTop: 8,
+                  padding: "6px",
                   borderRadius: 10,
                   border: `1px solid ${color}`,
-                  background: "rgba(255,255,255,0.03)",
+                  fontSize: 11,
+                  color,
+                  textAlign: "center",
                 }}
               >
-                <p style={{ margin: 0, fontSize: 12, color }}>
-                  🧠 Recovery Chance: {score}%
-                </p>
+                Recovery: {score}%
               </div>
-
-              {/* NEW BADGE */}
-              {newItem && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 10,
-                    right: 10,
-                    background: "#ef4444",
-                    padding: "4px 8px",
-                    borderRadius: 20,
-                    fontSize: 10,
-                    fontWeight: 700,
-                  }}
-                >
-                  NEW
-                </div>
-              )}
-
-              {/* TIMESTAMP */}
-              <p style={{ fontSize: 11, color: "#6b7280", marginTop: 8 }}>
-                {new Date(p.created_at).toLocaleString()}
-              </p>
             </div>
           );
         })}
