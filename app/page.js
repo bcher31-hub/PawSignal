@@ -2,14 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import Map from "@/components/Map";
 import UploadForm from "@/components/UploadForm";
 import { Home, Plus, Search, Heart } from "lucide-react";
 
 export default function Page() {
   const [pets, setPets] = useState([]);
   const [open, setOpen] = useState(false);
-  const [active, setActive] = useState(null);
 
   useEffect(() => {
     const fetchPets = async () => {
@@ -27,67 +25,98 @@ export default function Page() {
   return (
     <div style={styles.app}>
 
-      {/* MAP LAYER */}
-      <div style={styles.map}>
-        <Map pets={pets} activePet={active} />
+      {/* ================= HEADER ================= */}
+      <div style={styles.header}>
+        PawSignal
       </div>
 
-      {/* TOP BAR */}
-      <div style={styles.topBar}>
-        🐾 PawSignal
+      {/* ================= WELCOME ================= */}
+      <div style={styles.welcomeCard}>
+        <div>
+          <div style={styles.welcomeTitle}>Welcome back 👋</div>
+          <div style={styles.welcomeSub}>
+            Help reunite lost pets with their families
+          </div>
+        </div>
+
+        <div style={styles.avatar}>
+          🐶
+        </div>
       </div>
 
-      {/* SNAP FEED */}
-      <div style={styles.feed}>
+      {/* ================= ACTION BUTTONS ================= */}
+      <div style={styles.actions}>
+        <button style={styles.lostBtn} onClick={() => setOpen(true)}>
+          Report Lost Pet
+        </button>
+
+        <button style={styles.foundBtn}>
+          Found Nearby
+        </button>
+      </div>
+
+      {/* ================= SECTION TITLE ================= */}
+      <div style={styles.sectionTitle}>
+        Nearby Lost Pets
+      </div>
+
+      {/* ================= GRID ================= */}
+      <div style={styles.grid}>
         {pets.map((p) => (
-          <div
-            key={p.id}
-            style={{
-              ...styles.card,
-              border: active?.id === p.id
-                ? "2px solid #4ade80"
-                : "1px solid rgba(255,255,255,0.08)",
-            }}
-            onClick={() => setActive(p)}
-          >
-            {p.image_url ? (
-              <img src={p.image_url} style={styles.img} />
-            ) : (
-              <div style={styles.noImg}>No Image</div>
-            )}
+          <div key={p.id} style={styles.card}>
+            <div style={styles.imageWrap}>
+              <img
+                src={p.image_url || "https://via.placeholder.com/300"}
+                style={styles.image}
+              />
 
-            <div style={styles.info}>
-              <div style={styles.name}>{p.name || "Unknown"}</div>
-              <div style={styles.meta}>Tap to locate</div>
+              <div style={styles.distanceBadge}>
+                📍 1.2 mi
+              </div>
+            </div>
+
+            <div style={styles.cardBody}>
+              <div style={styles.petName}>
+                {p.name || "Unknown Pet"}
+              </div>
+
+              <div style={styles.petMeta}>
+                Last seen near your area
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* FLOAT ACTION BUTTON */}
+      {/* ================= FLOAT BUTTON ================= */}
       <button style={styles.fab} onClick={() => setOpen(true)}>
-        <Plus size={26} />
+        <Plus size={22} />
       </button>
 
-      {/* BOTTOM NAV */}
+      {/* ================= BOTTOM NAV ================= */}
       <div style={styles.nav}>
-        <button style={styles.navActive}>
+        <button style={styles.navItemActive}>
           <Home size={18} />
-          <span>Home</span>
+          Home
+        </button>
+
+        <button style={styles.navItem}>
+          <Plus size={18} />
+          Report
         </button>
 
         <button style={styles.navItem}>
           <Search size={18} />
-          <span>Search</span>
+          Search
         </button>
 
         <button style={styles.navItem}>
           <Heart size={18} />
-          <span>Saved</span>
+          Saved
         </button>
       </div>
 
-      {/* BOTTOM SHEET */}
+      {/* ================= MODAL ================= */}
       {open && (
         <div style={styles.overlay} onClick={() => setOpen(false)}>
           <div style={styles.sheet} onClick={(e) => e.stopPropagation()}>
@@ -101,136 +130,205 @@ export default function Page() {
   );
 }
 const styles = {
+
+  /* ================= BASE ================= */
   app: {
-    position: "relative",
     height: "100vh",
     width: "100vw",
-    overflow: "hidden",
     background: "#0b0f14",
+    color: "#fff",
+    padding: 16,
+    display: "flex",
+    flexDirection: "column",
+    gap: 14,
+    overflow: "hidden",
   },
 
-  map: {
-    position: "absolute",
-    inset: 0,
-    zIndex: 0,
-  },
-
-  topBar: {
-    position: "absolute",
-    top: 12,
-    left: 12,
-    right: 12,
-    zIndex: 10,
-    background: "rgba(0,0,0,0.55)",
-    backdropFilter: "blur(14px)",
-    color: "white",
+  /* ================= HEADER ================= */
+  header: {
+    fontSize: 18,
+    fontWeight: 700,
     textAlign: "center",
-    padding: "10px",
-    borderRadius: 14,
+    letterSpacing: 0.5,
+  },
+
+  /* ================= WELCOME ================= */
+  welcomeCard: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    background: "rgba(255,255,255,0.06)",
+    padding: 14,
+    borderRadius: 16,
+  },
+
+  welcomeTitle: {
+    fontSize: 15,
     fontWeight: 600,
   },
 
-  feed: {
-    position: "absolute",
-    bottom: 110,
-    left: 0,
-    right: 0,
-    display: "flex",
-    gap: 12,
-    padding: "0 14px",
-    overflowX: "auto",
-    zIndex: 10,
+  welcomeSub: {
+    fontSize: 12,
+    opacity: 0.65,
+    marginTop: 4,
   },
 
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    background: "rgba(255,255,255,0.1)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 22,
+  },
+
+  /* ================= ACTIONS ================= */
+  actions: {
+    display: "flex",
+    gap: 10,
+  },
+
+  lostBtn: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 14,
+    border: "none",
+    background: "#ff4d4d",
+    color: "white",
+    fontWeight: 600,
+  },
+
+  foundBtn: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 14,
+    border: "1px solid rgba(255,255,255,0.2)",
+    background: "transparent",
+    color: "white",
+    fontWeight: 500,
+  },
+
+  /* ================= SECTION TITLE ================= */
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: 600,
+    marginTop: 2,
+    opacity: 0.9,
+  },
+
+  /* ================= GRID ================= */
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, 1fr)",
+    gap: 12,
+    overflowY: "auto",
+    paddingBottom: 90,
+  },
+
+  /* ================= CARD ================= */
   card: {
-    minWidth: 170,
+    background: "rgba(255,255,255,0.06)",
     borderRadius: 16,
     overflow: "hidden",
-    background: "rgba(255,255,255,0.95)",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
   },
 
-  img: {
+  imageWrap: {
+    position: "relative",
+  },
+
+  image: {
     width: "100%",
     height: 120,
     objectFit: "cover",
   },
 
-  noImg: {
-    height: 120,
-    background: "#eee",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+  distanceBadge: {
+    position: "absolute",
+    bottom: 8,
+    left: 8,
+    fontSize: 10,
+    padding: "4px 8px",
+    borderRadius: 12,
+    background: "rgba(0,0,0,0.6)",
+    backdropFilter: "blur(8px)",
   },
 
-  info: {
+  cardBody: {
     padding: 10,
   },
 
-  name: {
+  petName: {
     fontSize: 13,
     fontWeight: 600,
   },
 
-  meta: {
+  petMeta: {
     fontSize: 11,
-    opacity: 0.7,
+    opacity: 0.6,
+    marginTop: 4,
   },
 
+  /* ================= FLOAT ACTION ================= */
   fab: {
-    position: "absolute",
-    bottom: 110,
-    right: 18,
-    width: 62,
-    height: 62,
+    position: "fixed",
+    bottom: 90,
+    right: 16,
+    width: 56,
+    height: 56,
     borderRadius: "50%",
     border: "none",
-    background: "linear-gradient(135deg,#ff6b6b,#ff2d2d)",
+    background: "linear-gradient(135deg,#ff5a5a,#ff2e2e)",
     color: "white",
-    zIndex: 10,
-    boxShadow: "0 15px 40px rgba(0,0,0,0.4)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
   },
 
+  /* ================= NAV ================= */
   nav: {
-    position: "absolute",
+    position: "fixed",
     bottom: 0,
     left: 0,
     right: 0,
-    height: 78,
-    background: "rgba(0,0,0,0.85)",
+    height: 70,
+    background: "#0b0f14",
+    borderTop: "1px solid rgba(255,255,255,0.08)",
     display: "flex",
     justifyContent: "space-around",
     alignItems: "center",
-    zIndex: 10,
-    borderTop: "1px solid rgba(255,255,255,0.08)",
   },
 
   navItem: {
-    background: "transparent",
-    border: "none",
-    color: "#888",
+    fontSize: 10,
+    opacity: 0.6,
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    fontSize: 11,
-  },
-
-  navActive: {
+    gap: 4,
     background: "transparent",
     border: "none",
+    color: "white",
+  },
+
+  navItemActive: {
+    fontSize: 10,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 4,
     color: "#4ade80",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    fontSize: 11,
+    background: "transparent",
+    border: "none",
   },
 
+  /* ================= SHEET ================= */
   overlay: {
     position: "fixed",
     inset: 0,
     background: "rgba(0,0,0,0.6)",
-    zIndex: 100,
   },
 
   sheet: {
@@ -239,15 +337,14 @@ const styles = {
     left: 0,
     right: 0,
     background: "#0f172a",
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     padding: 16,
-    animation: "slideUp 0.25s ease",
   },
 
   handle: {
-    width: 44,
-    height: 5,
+    width: 40,
+    height: 4,
     background: "#555",
     borderRadius: 10,
     margin: "0 auto 10px",
