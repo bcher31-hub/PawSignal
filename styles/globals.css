@@ -1,58 +1,49 @@
-/* =========================
-   RESET
-========================= */
+/* RESET */
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
-html, body {
-  height: 100%;
-  width: 100%;
+body {
   background: #0b0f14;
-  font-family: Arial, sans-serif;
-  overflow: hidden;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* =========================
-   MAP
-========================= */
-#map {
-  height: 100%;
-  width: 100%;
-  border-radius: 0;
-}
-
-/* =========================
-   INPUTS
-========================= */
-input, textarea {
-  background: #111827;
   color: white;
-  border: 1px solid #2a2f3a;
-  padding: 10px;
-  border-radius: 10px;
-  outline: none;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
-/* =========================
-   BUTTON FEEDBACK
-========================= */
-button {
-  cursor: pointer;
-  transition: transform 0.15s ease;
+/* PREMIUM INTERACTION */
+button, .card {
+  transition: transform 0.15s ease, opacity 0.2s ease, box-shadow 0.2s ease;
 }
 
 button:active {
   transform: scale(0.94);
 }
 
-/* =========================
-   SNAP ANIMATION
-========================= */
-@keyframes slideUp {
-  from { transform: translateY(30px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+.card:active {
+  transform: scale(0.96);
+}
+
+/* ANIMATIONS */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUpPremium {
+  from {
+    transform: translateY(100%);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
