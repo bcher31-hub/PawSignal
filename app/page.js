@@ -2,128 +2,161 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { getUserLocation } from "@/lib/geo";
+import { getUserLocation, getDistance } from "@/lib/geo";
 
-import TopBar from "@/components/TopBar";
-import WelcomeCard from "@/components/WelcomeCard";
 import ActionButtons from "@/components/ActionButtons";
 import PetGrid from "@/components/PetGrid";
-import BottomNav from "@/components/BottomNav";
 import UploadSheet from "@/components/UploadSheet";
 
 export default function Page() {
   const [pets, setPets] = useState([]);
-  const [tab, setTab] = useState("home");
+  const [filtered, setFiltered] = useState([]);
+  const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
-  const [activePet, setActivePet] = useState(null);
+  const [selectedPet, setSelectedPet] = useState(null);
   const [location, setLocation] = useState(null);
 
-  // =========================
-  // INIT (DATA + LOCATION)
-  // =========================
   useEffect(() => {
     const init = async () => {
-      // 📍 Get user location
-      try {
-        const loc = await getUserLocation();
-        setLocation(loc);
-        console.log("User location:", loc);
-      } catch (err) {
-        console.log("Location error:", err);
-      }
+      const loc = await getUserLocation().catch(() => null);
+      setLocation(loc);
 
-      // 🐾 Load pets
-      const { data } = await supabase
-        .from("lost_pets")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data } = await supabase.from("lost_pets").select("*");
 
-      setPets(data || []);
+      const enriched = (data || []).map((p) => {
+        if (loc && p.lat && p.lng) {
+          return {
+            ...p,
+            distance: getDistance(loc.lat, loc.lng, p.lat, p.lng),
+          };
+        }
+        return p;
+      });
+
+      setPets(enriched);
+      setFiltered(enriched);
     };
 
     init();
   }, []);
 
-  // =========================
-  // TAB LOGIC (REAL UX)
-  // =========================
-  let filteredPets = pets;
+  useEffect(() => {
+    let list = pets;
 
-  if (tab === "fav") {
-    // (placeholder favorites logic)
-    filteredPets = pets.filter((p) => p.is_favorite);
-  }
+    if (search) {
+      list = list.filter((p) =>
+        p.name?.toLowerCase().includes(search.toLowerCase())
+      );
+    }
 
-  if (tab === "search") {
-    // (future search filter)
-    filteredPets = pets;
-  }
+    setFiltered(list);
+  }, [search, pets]);
 
-  // =========================
-  // RENDER
-  // =========================
+  const handleNearby = () => {
+    if (!location) return alert("Enable location");
+    setFiltered(pets.filter((p) => p.distance && p.distance < 5));
+  };
+
   return (
     <div style={styles.app}>
+      <h2 style={styles.header}>PawSignal</h2>
 
-      {/* HEADER */}
-      <TopBar />
-
-      {/* WELCOME */}
-      <WelcomeCard location={location} />
-
-      {/* ACTION BUTTONS */}
-      <ActionButtons onOpen={() => setOpen(true)} />
-
-      {/* SECTION TITLE */}
-      <div style={styles.sectionTitle}>
-        Nearby Lost Pets
+      <div style={styles.welcome}>
+        <div>
+          <div style={{ fontWeight: 600 }}>Welcome back</div>
+          <div style={{ fontSize: 12, opacity: 0.7 }}>
+            Find lost pets near you
+          </div>
+        </div>
+        🐶
       </div>
 
-      {/* PET GRID */}
-      <PetGrid
-        pets={filteredPets}
-        activePet={activePet}
-        setActivePet={setActivePet}
-        userLocation={location}
+      <ActionButtons onOpen={() => setOpen(true)} onNearby={handleNearby} />
+
+      <input
+        placeholder="Search pets..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={styles.search}
       />
 
-      {/* BOTTOM NAV */}
-      <BottomNav
-        tab={tab}
-        setTab={setTab}
-        setOpen={setOpen}
-      />
+      <div style={styles.section}>Nearby Lost Pets</div>
 
-      {/* UPLOAD SHEET */}
-      {open && (
-        <UploadSheet onClose={() => setOpen(false)} />
+      <PetGrid pets={filtered} onSelect={setSelectedPet} />
+
+      {open && <UploadSheet onClose={() => setOpen(false)} />}
+
+      {selectedPet && (
+        <div style={styles.overlay} onClick={() => setSelectedPet(null)}>
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <img src={selectedPet.image_url} style={styles.modalImg} />
+            <h2>{selectedPet.name}</h2>
+            <p>{selectedPet.description || "No description"}</p>
+          </div>
+        </div>
       )}
-
     </div>
   );
 }
 
-// =========================
-// STYLES (LOCKED SYSTEM)
-// =========================
 const styles = {
   app: {
-    height: "100vh",
-    width: "100vw",
+    padding: 14,
     background: "#0b0f14",
-    color: "white",
-    padding: 16,
+    height: "100vh",
     display: "flex",
     flexDirection: "column",
-    gap: 12,
-    overflow: "hidden",
-    fontFamily: "system-ui, -apple-system, sans-serif",
+    gap: 10,
   },
 
-  sectionTitle: {
-    fontSize: 14,
+  header: {
+    textAlign: "center",
+    fontWeight: 700,
+  },
+
+  welcome: {
+    display: "flex",
+    justifyContent: "space-between",
+    padding: 12,
+    borderRadius: 14,
+    background: "rgba(255,255,255,0.05)",
+  },
+
+  search: {
+    padding: 10,
+    borderRadius: 12,
+    background: "rgba(255,255,255,0.05)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    color: "white",
+  },
+
+  section: {
+    fontSize: 13,
     fontWeight: 600,
-    opacity: 0.9,
-    marginTop: 4,
+  },
+
+  overlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.5)",
+    backdropFilter: "blur(8px)",
+  },
+
+  modal: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    background: "#111827",
+    padding: 16,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    animation: "slideUpPremium 0.28s ease",
+  },
+
+  modalImg: {
+    width: "100%",
+    borderRadius: 12,
+    marginBottom: 10,
   },
 };
